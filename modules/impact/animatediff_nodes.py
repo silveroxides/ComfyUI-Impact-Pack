@@ -16,7 +16,7 @@ class SEGSDetailerForAnimateDiff:
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": {
-                     "image_frames": ("IMAGE", ),
+                     "image_frames": ("IMAGE", {"tooltip": "Tooltip for image_frames"}),
                      "segs": ("SEGS", ),
                      "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                      "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region"}),
@@ -24,7 +24,7 @@ class SEGSDetailerForAnimateDiff:
                      "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                      "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                      "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                     "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
+                     "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Tooltip for sampler_name"}),
                      "scheduler": (core.SCHEDULERS,),
                      "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01}),
                      "basic_pipe": ("BASIC_PIPE", {"tooltip": "If the `ImpactDummyInput` is connected to the model in the basic_pipe, the inference stage is skipped."}),
@@ -138,7 +138,7 @@ class DetailerForEachPipeForAnimateDiff:
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": {
-                      "image_frames": ("IMAGE", ),
+                      "image_frames": ("IMAGE", {"tooltip": "Tooltip for image_frames"}),
                       "segs": ("SEGS", ),
                       "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8}),
                       "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region"}),
@@ -146,7 +146,7 @@ class DetailerForEachPipeForAnimateDiff:
                       "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                       "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                       "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                      "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
+                      "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Tooltip for sampler_name"}),
                       "scheduler": (core.SCHEDULERS,),
                       "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01}),
                       "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1}),
