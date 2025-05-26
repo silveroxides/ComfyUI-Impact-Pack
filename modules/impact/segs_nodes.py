@@ -26,30 +26,29 @@ class SEGSDetailer:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "image": ("IMAGE", ),
-                     "segs": ("SEGS", ),
-                     "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
-                     "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region"}),
-                     "max_size": ("FLOAT", {"default": 768, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
-                     "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                     "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                     "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                     "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                     "scheduler": (core.SCHEDULERS,),
-                     "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01}),
-                     "noise_mask": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled"}),
-                     "force_inpaint": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled"}),
+                     "image": ("IMAGE", {"tooltip": "The input image on which SEGS detailing will be performed."}),
+                     "segs": ("SEGS", {"tooltip": "Input SEGS (segments) data defining regions to be detailed."}),
+                     "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 8, "tooltip": "Target size to guide the detail enhancement process for each segment."}),
+                     "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region", "tooltip": "Determines if 'guide_size' refers to the bounding box ('bbox') or the cropped region ('crop_region') for scaling."}),
+                     "max_size": ("FLOAT", {"default": 768, "min": 64, "max": MAX_RESOLUTION, "step": 8, "tooltip": "Maximum size for a segment after scaling for detail enhancement."}),
+                     "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Seed for the random number generator used in the sampling process."}),
+                     "steps": ("INT", {"default": 20, "min": 1, "max": 10000, "tooltip": "Number of sampling steps for the detail enhancement."}),
+                     "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "tooltip": "Classifier Free Guidance scale."}),
+                     "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Name of the KSampler to use for detailing."}),
+                     "scheduler": (core.SCHEDULERS, {"tooltip": "Scheduler for the KSampler."}),
+                     "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength for the detail enhancement."}),
+                     "noise_mask": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled", "tooltip": "If true, uses the segment's own mask as a noise mask during enhancement."}),
+                     "force_inpaint": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled", "tooltip": "If true, forces inpainting even if the segment is already large."}),
                      "basic_pipe": ("BASIC_PIPE", {"tooltip": "If the `ImpactDummyInput` is connected to the model in the basic_pipe, the inference stage is skipped."}),
-                     "refiner_ratio": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0}),
-                     "batch_size": ("INT", {"default": 1, "min": 1, "max": 100}),
-
-                     "cycle": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1}),
+                     "refiner_ratio": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0, "tooltip": "Ratio of steps at which to switch to the refiner model/pipe, if provided."}),
+                     "batch_size": ("INT", {"default": 1, "min": 1, "max": 100, "tooltip": "Number of times to repeat the detailing process with incrementing seeds for each segment."}),
+                     "cycle": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1, "tooltip": "Number of enhancement cycles to perform on each segment within a batch."}),
                      },
                 "optional": {
-                     "refiner_basic_pipe_opt": ("BASIC_PIPE",),
-                     "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                     "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1}),
-                     "scheduler_func_opt": ("SCHEDULER_FUNC",),
+                     "refiner_basic_pipe_opt": ("BASIC_PIPE", {"tooltip": "Optional basic pipe for a refiner stage."}),
+                     "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "If true, uses inpaint model conditioning for VAE encoding."}),
+                     "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering amount (in pixels) for the noise mask, if `noise_mask` is enabled."}),
+                     "scheduler_func_opt": ("SCHEDULER_FUNC", {"tooltip": "Optional custom scheduler function to override the standard scheduler."}),
                      }
                 }
 
@@ -164,12 +163,12 @@ class SEGSPaste:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "image": ("IMAGE", ),
-                     "segs": ("SEGS", ),
-                     "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1}),
-                     "alpha": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
+                     "image": ("IMAGE", {"tooltip": "The destination image onto which the detailed segments will be pasted."}),
+                     "segs": ("SEGS", {"tooltip": "The SEGS data containing the (presumably enhanced) segment images to paste."}),
+                     "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering amount (in pixels) for blending the edges of the pasted segments."}),
+                     "alpha": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1, "tooltip": "Alpha transparency for pasting the segments (0-255)."}),
                      },
-                "optional": {"ref_image_opt": ("IMAGE", ), }
+                "optional": {"ref_image_opt": ("IMAGE", {"tooltip": "Optional reference image. If provided and segments lack their own images, images will be cropped from this reference for pasting."}), }
                 }
 
     RETURN_TYPES = ("IMAGE", )
@@ -240,7 +239,7 @@ class SEGSPreviewCNet:
 
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {"segs": ("SEGS", ),}, }
+        return {"required": {"segs": ("SEGS", {"tooltip": "Input SEGS data to preview ControlNet conditioning images from."}),}, }
 
     RETURN_TYPES = ("IMAGE", )
     OUTPUT_IS_LIST = (True, )
@@ -288,12 +287,12 @@ class SEGSPreview:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "segs": ("SEGS", ),
-                     "alpha_mode": ("BOOLEAN", {"default": True, "label_on": "enable", "label_off": "disable"}),
-                     "min_alpha": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0, "step": 0.01}),
+                     "segs": ("SEGS", {"tooltip": "Input SEGS data to preview."}),
+                     "alpha_mode": ("BOOLEAN", {"default": True, "label_on": "enable", "label_off": "disable", "tooltip": "Enable to apply segment masks as alpha channels for preview."}),
+                     "min_alpha": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Minimum alpha value to apply if alpha_mode is enabled, ensuring visibility."}),
                     },
                 "optional": {
-                     "fallback_image_opt": ("IMAGE", ),
+                     "fallback_image_opt": ("IMAGE", {"tooltip": "Optional fallback image to crop from if segments don't have their own images."}),
                     }
                 }
 
@@ -421,9 +420,9 @@ class SEGSLabelFilter:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "segs": ("SEGS", ),
-                        "preset": (['all'] + defs.detection_labels, ),
-                        "labels": ("STRING", {"multiline": True, "placeholder": "List the types of segments to be allowed, separated by commas"}),
+                        "segs": ("SEGS", {"tooltip": "Input SEGS data to be filtered by label."}),
+                        "preset": (['all'] + defs.detection_labels, {"tooltip": "Select a preset list of labels for filtering."}),
+                        "labels": ("STRING", {"multiline": True, "placeholder": "List the types of segments to be allowed, separated by commas", "tooltip": "Comma-separated list of labels to keep. Overrides preset if provided."}),
                      },
                 }
 
@@ -466,8 +465,8 @@ class SEGSLabelAssign:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "segs": ("SEGS", ),
-                        "labels": ("STRING", {"multiline": True, "placeholder": "List the label to be assigned in order of segs, separated by commas"}),
+                        "segs": ("SEGS", {"tooltip": "Input SEGS data to assign new labels to."}),
+                        "labels": ("STRING", {"multiline": True, "placeholder": "List the label to be assigned in order of segs, separated by commas", "tooltip": "Comma-separated list of new labels to assign to segments in order."}),
                      },
                 }
 
@@ -504,11 +503,11 @@ class SEGSOrderedFilter:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "segs": ("SEGS", ),
-                        "target": (["area(=w*h)", "width", "height", "x1", "y1", "x2", "y2", "confidence", "none"],),
-                        "order": ("BOOLEAN", {"default": True, "label_on": "descending", "label_off": "ascending"}),
-                        "take_start": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1}),
-                        "take_count": ("INT", {"default": 1, "min": 0, "max": sys.maxsize, "step": 1}),
+                        "segs": ("SEGS", {"tooltip": "Input SEGS data to be ordered."}),
+                        "target": (["area(=w*h)", "width", "height", "x1", "y1", "x2", "y2", "confidence", "none"], {"tooltip": "Attribute of the segment to use for ordering."}),
+                        "order": ("BOOLEAN", {"default": True, "label_on": "descending", "label_off": "ascending", "tooltip": "Sort order: 'descending' (True) or 'ascending' (False)."}),
+                        "take_start": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1, "tooltip": "Starting index (0-based) of segments to take from the ordered list."}),
+                        "take_count": ("INT", {"default": 1, "min": 0, "max": sys.maxsize, "step": 1, "tooltip": "Number of segments to take, starting from `take_start`."}),
                      },
                 }
 
@@ -553,11 +552,11 @@ class SEGSRangeFilter:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "segs": ("SEGS", ),
-                        "target": (["area(=w*h)", "width", "height", "x1", "y1", "x2", "y2", "length_percent", "confidence(0-100)"],),
-                        "mode": ("BOOLEAN", {"default": True, "label_on": "inside", "label_off": "outside"}),
-                        "min_value": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1}),
-                        "max_value": ("INT", {"default": 67108864, "min": 0, "max": sys.maxsize, "step": 1}),
+                        "segs": ("SEGS", {"tooltip": "Input SEGS data to be filtered by range."}),
+                        "target": (["area(=w*h)", "width", "height", "x1", "y1", "x2", "y2", "length_percent", "confidence(0-100)"], {"tooltip": "Attribute of the segment to check against the range."}),
+                        "mode": ("BOOLEAN", {"default": True, "label_on": "inside", "label_off": "outside", "tooltip": "Filter mode: 'inside' (True) keeps segments within the range, 'outside' (False) keeps segments outside."}),
+                        "min_value": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1, "tooltip": "Minimum value of the target attribute for filtering."}),
+                        "max_value": ("INT", {"default": 67108864, "min": 0, "max": sys.maxsize, "step": 1, "tooltip": "Maximum value of the target attribute for filtering."}),
                      },
                 }
 
@@ -618,9 +617,9 @@ class SEGSIntersectionFilter:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "segs1": ("SEGS", ),
-                        "segs2": ("SEGS", ),
-                        "ioa_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
+                        "segs1": ("SEGS", {"tooltip": "Primary set of segments. Segments from this set will be filtered."}),
+                        "segs2": ("SEGS", {"tooltip": "Secondary set of segments used to check for intersection against segs1."}),
+                        "ioa_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Intersection over Area (IoA) threshold. Segments from segs1 with IoA greater than this with any segs2 segment are removed."}),
                      },
                 }
 
@@ -670,8 +669,8 @@ class SEGSNMSFilter:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "segs": ("SEGS",),
-                "iou_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "segs": ("SEGS", {"tooltip": "Input segments (SEGS) to apply Non-Maximum Suppression to."}),
+                "iou_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Intersection over Union (IoU) threshold for suppressing overlapping segments."}),
             },
         }
 
@@ -723,10 +722,10 @@ class SEGSToImageList:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "segs": ("SEGS", ),
+                     "segs": ("SEGS", {"tooltip": "Input SEGS data from which to extract cropped images."}),
                      },
                 "optional": {
-                     "fallback_image_opt": ("IMAGE", ),
+                     "fallback_image_opt": ("IMAGE", {"tooltip": "Optional fallback image if segments don't have pre-cropped images."}),
                     }
                 }
 
@@ -763,7 +762,9 @@ class SEGSToMaskList:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "segs": ("SEGS", ),
+                     "segs": ("SEGS", {"tooltip": "Input SEGS data from which to extract masks."}),
+                     "segs": ("SEGS", {"tooltip": "Input SEGS data whose masks will be combined into a single batch tensor."}),
+                     "segs": ("SEGS", {"tooltip": "Input SEGS data to be merged into a single segment."}),
                      },
                 }
 
@@ -868,7 +869,7 @@ class SEGSConcat:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "segs1": ("SEGS", ),
+                     "segs1": ("SEGS", {"tooltip": "First set of SEGS to concatenate. Additional SEGS inputs can be added dynamically."}),
                      },
                 }
 
@@ -905,7 +906,8 @@ class Count_Elts_in_SEGS:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "segs": ("SEGS", ),
+                     "segs": ("SEGS", {"tooltip": "Input SEGS data to count the number of elements in."}),
+                     "segs": ("SEGS", {"tooltip": "Input SEGS data to decompose into header and elements."}),
                      },
                 }
 
@@ -941,8 +943,8 @@ class AssembleSEGS:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "seg_header": ("SEGS_HEADER", ),
-                     "seg_elt": ("SEG_ELT", ),
+                     "seg_header": ("SEGS_HEADER", {"tooltip": "The header part of SEGS (shape information)."}),
+                     "seg_elt": ("SEG_ELT", {"tooltip": "List of individual segment elements (SEG_ELT)."}),
                      },
                 }
 
@@ -962,7 +964,7 @@ class From_SEG_ELT:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "seg_elt": ("SEG_ELT", ),
+                     "seg_elt": ("SEG_ELT", {"tooltip": "A single segment element (SEG_ELT) to decompose."}),
                      },
                 }
 
@@ -982,7 +984,7 @@ class From_SEG_ELT_bbox:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "bbox": ("SEG_ELT_bbox", ),
+                     "bbox": ("SEG_ELT_bbox", {"tooltip": "Bounding box data from a segment element."}),
                      },
                 }
 
@@ -1001,7 +1003,7 @@ class From_SEG_ELT_crop_region:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "crop_region": ("SEG_ELT_crop_region", ),
+                     "crop_region": ("SEG_ELT_crop_region", {"tooltip": "Crop region data from a segment element."}),
                      },
                 }
 
@@ -1020,16 +1022,16 @@ class Edit_SEG_ELT:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "seg_elt": ("SEG_ELT", ),
+                     "seg_elt": ("SEG_ELT", {"tooltip": "The segment element (SEG_ELT) to be edited."}),
                      },
                 "optional": {
-                     "cropped_image_opt": ("IMAGE", ),
-                     "cropped_mask_opt": ("MASK", ),
-                     "crop_region_opt": ("SEG_ELT_crop_region", ),
-                     "bbox_opt": ("SEG_ELT_bbox", ),
-                     "control_net_wrapper_opt": ("SEG_ELT_control_net_wrapper", ),
-                     "confidence_opt": ("FLOAT", {"min": 0, "max": 1.0, "step": 0.1, "forceInput": True}),
-                     "label_opt": ("STRING", {"multiline": False, "forceInput": True}),
+                     "cropped_image_opt": ("IMAGE", {"tooltip": "Optional new cropped image for the segment."}),
+                     "cropped_mask_opt": ("MASK", {"tooltip": "Optional new cropped mask for the segment."}),
+                     "crop_region_opt": ("SEG_ELT_crop_region", {"tooltip": "Optional new crop region for the segment."}),
+                     "bbox_opt": ("SEG_ELT_bbox", {"tooltip": "Optional new bounding box for the segment."}),
+                     "control_net_wrapper_opt": ("SEG_ELT_control_net_wrapper", {"tooltip": "Optional new ControlNet wrapper for the segment."}),
+                     "confidence_opt": ("FLOAT", {"min": 0, "max": 1.0, "step": 0.1, "forceInput": True, "tooltip": "Optional new confidence score for the segment."}),
+                     "label_opt": ("STRING", {"multiline": False, "forceInput": True, "tooltip": "Optional new label for the segment."}),
                     }
                 }
 
@@ -1067,8 +1069,8 @@ class DilateMask:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "mask": ("MASK", ),
-                     "dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1}),
+                     "mask": ("MASK", {"tooltip": "Input mask to be dilated or eroded."}),
+                     "dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor. Positive values expand, negative values erode the mask."}),
                 }}
 
     RETURN_TYPES = ("MASK", )
@@ -1088,9 +1090,9 @@ class GaussianBlurMask:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "mask": ("MASK", ),
-                     "kernel_size": ("INT", {"default": 10, "min": 0, "max": 100, "step": 1}),
-                     "sigma": ("FLOAT", {"default": 10.0, "min": 0.1, "max": 100.0, "step": 0.1}),
+                     "mask": ("MASK", {"tooltip": "Input mask to apply Gaussian blur to."}),
+                     "kernel_size": ("INT", {"default": 10, "min": 0, "max": 100, "step": 1, "tooltip": "Size of the Gaussian kernel (must be odd and positive)."}),
+                     "sigma": ("FLOAT", {"default": 10.0, "min": 0.1, "max": 100.0, "step": 0.1, "tooltip": "Gaussian kernel standard deviation."}),
                 }}
 
     RETURN_TYPES = ("MASK", )
@@ -1112,8 +1114,8 @@ class DilateMaskInSEGS:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "segs": ("SEGS", ),
-                     "dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1}),
+                     "segs": ("SEGS", {"tooltip": "Input SEGS data. The mask of each segment will be dilated/eroded."}),
+                     "dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for each segment's mask."}),
                 }}
 
     RETURN_TYPES = ("SEGS", )
@@ -1136,9 +1138,9 @@ class GaussianBlurMaskInSEGS:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "segs": ("SEGS", ),
-                     "kernel_size": ("INT", {"default": 10, "min": 0, "max": 100, "step": 1}),
-                     "sigma": ("FLOAT", {"default": 10.0, "min": 0.1, "max": 100.0, "step": 0.1}),
+                     "segs": ("SEGS", {"tooltip": "Input SEGS data. The mask of each segment will be blurred."}),
+                     "kernel_size": ("INT", {"default": 10, "min": 0, "max": 100, "step": 1, "tooltip": "Gaussian kernel size for blurring each segment's mask."}),
+                     "sigma": ("FLOAT", {"default": 10.0, "min": 0.1, "max": 100.0, "step": 0.1, "tooltip": "Gaussian kernel standard deviation for blurring."}),
                 }}
 
     RETURN_TYPES = ("SEGS", )
@@ -1162,8 +1164,8 @@ class Dilate_SEG_ELT:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "seg_elt": ("SEG_ELT", ),
-                     "dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1}),
+                     "seg_elt": ("SEG_ELT", {"tooltip": "A single segment element (SEG_ELT) whose mask will be dilated/eroded."}),
+                     "dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for the segment's mask."}),
                 }}
 
     RETURN_TYPES = ("SEG_ELT", )
@@ -1182,8 +1184,8 @@ class SEG_ELT_BBOX_ScaleBy:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "seg": ("SEG_ELT", ),
-                     "scale_by": ("FLOAT", {"default": 1.0, "min": 0.01, "max": 8.0, "step": 0.01}), }
+                     "seg": ("SEG_ELT", {"tooltip": "The segment element (SEG_ELT) whose bounding box will be scaled."}),
+                     "scale_by": ("FLOAT", {"default": 1.0, "min": 0.01, "max": 8.0, "step": 0.01, "tooltip": "Factor by which to scale the bounding box. The mask will be cropped to the new bounding box."}), }
                 }
 
     RETURN_TYPES = ("SEG_ELT", )
@@ -1244,7 +1246,7 @@ class EmptySEGS:
 class SegsToCombinedMask:
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {"segs": ("SEGS",), }}
+        return {"required": {"segs": ("SEGS", {"tooltip": "Input SEGS data whose masks will be combined into a single mask."}), }}
 
     RETURN_TYPES = ("MASK",)
     FUNCTION = "doit"
@@ -1263,20 +1265,20 @@ class MediaPipeFaceMeshToSEGS:
         bool_true_widget = ("BOOLEAN", {"default": True, "label_on": "Enabled", "label_off": "Disabled"})
         bool_false_widget = ("BOOLEAN", {"default": False, "label_on": "Enabled", "label_off": "Disabled"})
         return {"required": {
-                                "image": ("IMAGE",),
-                                "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1}),
-                                "bbox_fill": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                                "crop_min_size": ("INT", {"min": 10, "max": MAX_RESOLUTION, "step": 1, "default": 50}),
-                                "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 1}),
-                                "dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1}),
-                                "face": bool_true_widget,
-                                "mouth": bool_false_widget,
-                                "left_eyebrow": bool_false_widget,
-                                "left_eye": bool_false_widget,
-                                "left_pupil": bool_false_widget,
-                                "right_eyebrow": bool_false_widget,
-                                "right_eye": bool_false_widget,
-                                "right_pupil": bool_false_widget,
+                                "image": ("IMAGE", {"tooltip": "Input image to detect MediaPipe face mesh on."}),
+                                "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1, "tooltip": "Factor to expand the bounding box for cropping segment images."}),
+                                "bbox_fill": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "If true, segment masks become their bounding boxes."}),
+                                "crop_min_size": ("INT", {"min": 10, "max": MAX_RESOLUTION, "step": 1, "default": 50, "tooltip": "Minimum size for cropped segment images."}),
+                                "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 1, "tooltip": "Minimum size for detected parts to be considered segments."}),
+                                "dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for generated segment masks."}),
+                                "face": (bool_true_widget[0], {**bool_true_widget[1], "tooltip": "Enable to generate a segment for the overall face."}),
+                                "mouth": (bool_false_widget[0], {**bool_false_widget[1], "tooltip": "Enable to generate a segment for the mouth."}),
+                                "left_eyebrow": (bool_false_widget[0], {**bool_false_widget[1], "tooltip": "Enable to generate a segment for the left eyebrow."}),
+                                "left_eye": (bool_false_widget[0], {**bool_false_widget[1], "tooltip": "Enable to generate a segment for the left eye."}),
+                                "left_pupil": (bool_false_widget[0], {**bool_false_widget[1], "tooltip": "Enable to generate a segment for the left pupil."}),
+                                "right_eyebrow": (bool_false_widget[0], {**bool_false_widget[1], "tooltip": "Enable to generate a segment for the right eyebrow."}),
+                                "right_eye": (bool_false_widget[0], {**bool_false_widget[1], "tooltip": "Enable to generate a segment for the right eye."}),
+                                "right_pupil": (bool_false_widget[0], {**bool_false_widget[1], "tooltip": "Enable to generate a segment for the right pupil."}),
                              },
                 # "optional": {"reference_image_opt": ("IMAGE", ), }
                 }
@@ -1326,12 +1328,18 @@ class MaskToSEGS:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                                "mask": ("MASK",),
-                                "combined": ("BOOLEAN", {"default": False, "label_on": "True", "label_off": "False"}),
-                                "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1}),
-                                "bbox_fill": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                                "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10}),
-                                "contour_fill": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
+                                "mask": ("MASK", {"tooltip": "Input mask to convert into SEGS."}),
+                                "combined": ("BOOLEAN", {"default": False, "label_on": "True", "label_off": "False", "tooltip": "If true, treats the entire mask as a single segment. If false, finds contours to create multiple segments."}),
+                                "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1, "tooltip": "Factor to expand the segment's bounding box for cropping."}),
+                                "bbox_fill": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "If true, the segment's mask will be its bounding box, not the original mask shape."}),
+                                "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10, "tooltip": "Minimum size for a contour to be considered a segment."}),
+                                "contour_fill": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "If false and not 'combined', mask values from original mask are used within contours. If true, contours are filled."}),
+                                "mask": ("MASK", {"tooltip": "Input mask (can be a batch for AnimateDiff) to convert into SEGS."}),
+                                "combined": ("BOOLEAN", {"default": False, "label_on": "True", "label_off": "False", "tooltip": "If true, treats the entire mask (or each mask in batch) as a single segment."}),
+                                "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1, "tooltip": "Factor to expand segment bounding box for cropping."}),
+                                "bbox_fill": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "If true, segment masks become their bounding boxes."}),
+                                "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10, "tooltip": "Minimum size for contours to be segments."}),
+                                "contour_fill": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "If false and not 'combined', uses original mask values within contours; if true, fills contours. Ignored for batch masks."}),
                              }
                 }
 
@@ -1393,22 +1401,22 @@ class IPAdapterApplySEGS:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "segs": ("SEGS",),
-                    "ipadapter_pipe": ("IPADAPTER_PIPE",),
-                    "weight": ("FLOAT", {"default": 0.7, "min": -1, "max": 3, "step": 0.05}),
-                    "noise": ("FLOAT", {"default": 0.4, "min": 0.0, "max": 1.0, "step": 0.01}),
-                    "weight_type": (["original", "linear", "channel penalty"], {"default": 'channel penalty'}),
-                    "start_at": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001}),
-                    "end_at": ("FLOAT", {"default": 0.9, "min": 0.0, "max": 1.0, "step": 0.001}),
-                    "unfold_batch": ("BOOLEAN", {"default": False}),
-                    "faceid_v2": ("BOOLEAN", {"default": False}),
-                    "weight_v2": ("FLOAT", {"default": 1.0, "min": -1, "max": 3, "step": 0.05}),
-                    "context_crop_factor": ("FLOAT", {"default": 1.2, "min": 1.0, "max": 100, "step": 0.1}),
-                    "reference_image": ("IMAGE",),
+                    "segs": ("SEGS", {"tooltip": "Input SEGS. IPAdapter conditioning will be applied based on each segment's context."}),
+                    "ipadapter_pipe": ("IPADAPTER_PIPE", {"tooltip": "IPAdapter pipe containing the IPAdapter model and settings."}),
+                    "weight": ("FLOAT", {"default": 0.7, "min": -1, "max": 3, "step": 0.05, "tooltip": "Weight of the IPAdapter conditioning."}),
+                    "noise": ("FLOAT", {"default": 0.4, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Noise added to embeddings, if applicable by the IPAdapter model."}),
+                    "weight_type": (["original", "linear", "channel penalty"], {"default": 'channel penalty', "tooltip": "Type of IPAdapter weight application (e.g., original, linear)."}),
+                    "start_at": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001, "tooltip": "Step at which IPAdapter conditioning starts to apply."}),
+                    "end_at": ("FLOAT", {"default": 0.9, "min": 0.0, "max": 1.0, "step": 0.001, "tooltip": "Step at which IPAdapter conditioning stops applying."}),
+                    "unfold_batch": ("BOOLEAN", {"default": False, "tooltip": "If true, process images in batch as individual items for IPAdapter."}),
+                    "faceid_v2": ("BOOLEAN", {"default": False, "tooltip": "Enable FaceID v2 specific features if the IPAdapter model supports it."}),
+                    "weight_v2": ("FLOAT", {"default": 1.0, "min": -1, "max": 3, "step": 0.05, "tooltip": "Weight for FaceID v2 features."}),
+                    "context_crop_factor": ("FLOAT", {"default": 1.2, "min": 1.0, "max": 100, "step": 0.1, "tooltip": "Factor to expand the segment's crop region to define the context area for IPAdapter."}),
+                    "reference_image": ("IMAGE", {"tooltip": "The image from which context for IPAdapter will be cropped for each segment."}),
                     },
                 "optional": {
-                    "combine_embeds": (["concat", "add", "subtract", "average", "norm average"],),
-                    "neg_image": ("IMAGE",),
+                    "combine_embeds": (["concat", "add", "subtract", "average", "norm average"], {"tooltip": "Method to combine embeddings if multiple IPAdapters are chained."}),
+                    "neg_image": ("IMAGE", {"tooltip": "Optional negative image for IPAdapter conditioning."}),
                     },
                 }
 
@@ -1447,13 +1455,13 @@ class ControlNetApplySEGS:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "segs": ("SEGS",),
-                    "control_net": ("CONTROL_NET",),
-                    "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01}),
+                    "segs": ("SEGS", {"tooltip": "Input SEGS. ControlNet will be applied based on each segment."}),
+                    "control_net": ("CONTROL_NET", {"tooltip": "The ControlNet model to apply."}),
+                    "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01, "tooltip": "Strength of the ControlNet conditioning."}),
                     },
                 "optional": {
-                    "segs_preprocessor": ("SEGS_PREPROCESSOR",),
-                    "control_image": ("IMAGE",)
+                    "segs_preprocessor": ("SEGS_PREPROCESSOR", {"tooltip": "Optional preprocessor to generate ControlNet input from segments."}),
+                    "control_image": ("IMAGE", {"tooltip": "Optional explicit control image. If not provided, it's generated by `segs_preprocessor` or from the segment's image."})
                     }
                 }
 
@@ -1481,16 +1489,16 @@ class ControlNetApplyAdvancedSEGS:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "segs": ("SEGS",),
-                    "control_net": ("CONTROL_NET",),
-                    "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01}),
-                    "start_percent": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001}),
-                    "end_percent": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.001})
+                    "segs": ("SEGS", {"tooltip": "Input SEGS. ControlNet will be applied based on each segment."}),
+                    "control_net": ("CONTROL_NET", {"tooltip": "The ControlNet model to apply."}),
+                    "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01, "tooltip": "Strength of the ControlNet conditioning."}),
+                    "start_percent": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001, "tooltip": "Percentage of sampling steps at which ControlNet starts to apply."}),
+                    "end_percent": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.001, "tooltip": "Percentage of sampling steps at which ControlNet stops applying."})
                     },
                 "optional": {
-                    "segs_preprocessor": ("SEGS_PREPROCESSOR",),
-                    "control_image": ("IMAGE",),
-                    "vae": ("VAE",)
+                    "segs_preprocessor": ("SEGS_PREPROCESSOR", {"tooltip": "Optional preprocessor to generate ControlNet input from segments."}),
+                    "control_image": ("IMAGE", {"tooltip": "Optional explicit control image. If not provided, it's generated by `segs_preprocessor` or from the segment's image."}),
+                    "vae": ("VAE", {"tooltip": "Optional VAE for ControlNet, if applicable."})
                     }
                 }
 
@@ -1516,7 +1524,7 @@ class ControlNetApplyAdvancedSEGS:
 class ControlNetClearSEGS:
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {"segs": ("SEGS",), }, }
+        return {"required": {"segs": ("SEGS", {"tooltip": "Input SEGS from which to remove any attached ControlNet wrappers."}), }, }
 
     RETURN_TYPES = ("SEGS",)
     FUNCTION = "doit"
@@ -1538,8 +1546,8 @@ class SEGSSwitch:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "select": ("INT", {"default": 1, "min": 1, "max": 99999, "step": 1}),
-                    "segs1": ("SEGS",),
+                    "select": ("INT", {"default": 1, "min": 1, "max": 99999, "step": 1, "tooltip": "Index of the SEGS input to pass through (1-based)."}),
+                    "segs1": ("SEGS", {"tooltip": "First SEGS input. Additional inputs 'segs2', 'segs3', etc., can be added dynamically."}),
                     },
                 }
 
@@ -1565,11 +1573,11 @@ class SEGSPicker:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "picks": ("STRING", {"multiline": True, "dynamicPrompts": False, "pysssss.autocomplete": False}),
-                    "segs": ("SEGS",),
+                    "picks": ("STRING", {"multiline": True, "dynamicPrompts": False, "pysssss.autocomplete": False, "tooltip": "Comma-separated list of indices (1-based) of segments to select from the input SEGS."}),
+                    "segs": ("SEGS", {"tooltip": "Input SEGS data from which to pick segments."}),
                     },
                 "optional": {
-                     "fallback_image_opt": ("IMAGE", ),
+                     "fallback_image_opt": ("IMAGE", {"tooltip": "Optional fallback image for generating previews if segments lack images."}),
                     },
                 "hidden": {"unique_id": "UNIQUE_ID"},
                 }
@@ -1628,9 +1636,9 @@ class DefaultImageForSEGS:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "segs": ("SEGS", ),
-                    "image": ("IMAGE", ),
-                    "override": ("BOOLEAN", {"default": True}),
+                    "segs": ("SEGS", {"tooltip": "Input SEGS data. If segments lack `cropped_image`, it will be set from the input `image`."}),
+                    "image": ("IMAGE", {"tooltip": "The image to use as the source for `cropped_image` in segments that don't have one."}),
+                    "override": ("BOOLEAN", {"default": True, "tooltip": "If true, overrides existing `cropped_image` in segments. If false, only sets if `cropped_image` is missing."}),
                 }}
 
     RETURN_TYPES = ("SEGS", )
@@ -1678,7 +1686,7 @@ class DefaultImageForSEGS:
 class RemoveImageFromSEGS:
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {"segs": ("SEGS", ), }}
+        return {"required": {"segs": ("SEGS", {"tooltip": "Input SEGS data. The `cropped_image` attribute of each segment will be set to None."}), }}
 
     RETURN_TYPES = ("SEGS", )
     FUNCTION = "doit"
@@ -1703,17 +1711,17 @@ class MakeTileSEGS:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "images": ("IMAGE", ),
-                     "bbox_size": ("INT", {"default": 512, "min": 64, "max": 4096, "step": 8}),
-                     "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 10, "step": 0.01}),
-                     "min_overlap": ("INT", {"default": 5, "min": 0, "max": 512, "step": 1}),
-                     "filter_segs_dilation": ("INT", {"default": 20, "min": -255, "max": 255, "step": 1}),
-                     "mask_irregularity": ("FLOAT", {"default": 0, "min": 0, "max": 1.0, "step": 0.01}),
-                     "irregular_mask_mode": (["Reuse fast", "Reuse quality", "All random fast", "All random quality"],)
+                     "images": ("IMAGE", {"tooltip": "Input image(s) to be tiled into segments."}),
+                     "bbox_size": ("INT", {"default": 512, "min": 64, "max": 4096, "step": 8, "tooltip": "Target size for the bounding box of each tile."}),
+                     "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 10, "step": 0.01, "tooltip": "Factor to expand the tile's bounding box to define its crop region."}),
+                     "min_overlap": ("INT", {"default": 5, "min": 0, "max": 512, "step": 1, "tooltip": "Minimum overlap between adjacent tiles."}),
+                     "filter_segs_dilation": ("INT", {"default": 20, "min": -255, "max": 255, "step": 1, "tooltip": "Dilation applied to filter masks (`filter_in_segs_opt`, `filter_out_segs_opt`)."}),
+                     "mask_irregularity": ("FLOAT", {"default": 0, "min": 0, "max": 1.0, "step": 0.01, "tooltip": "Factor for creating irregular random masks for tiles (0 for rectangular)."}),
+                     "irregular_mask_mode": (["Reuse fast", "Reuse quality", "All random fast", "All random quality"], {"tooltip": "Mode for generating irregular masks: reuse a cached mask or generate randomly for each tile, with quality options."})
                     },
                 "optional": {
-                    "filter_in_segs_opt": ("SEGS", ),
-                    "filter_out_segs_opt": ("SEGS", ),
+                    "filter_in_segs_opt": ("SEGS", {"tooltip": "Optional SEGS. Tiles will only be created within the combined mask of these segments."}),
+                    "filter_out_segs_opt": ("SEGS", {"tooltip": "Optional SEGS. Tiles overlapping with these segments will be excluded."}),
                     }
                 }
 
@@ -1895,31 +1903,31 @@ class SEGSUpscaler:
         resampling_methods = ["lanczos", "nearest", "bilinear", "bicubic"]
 
         return {"required": {
-                    "image": ("IMAGE",),
-                    "segs": ("SEGS",),
-                    "model": ("MODEL",),
-                    "clip": ("CLIP",),
-                    "vae": ("VAE",),
-                    "rescale_factor": ("FLOAT", {"default": 2, "min": 0.01, "max": 100.0, "step": 0.01}),
-                    "resampling_method": (resampling_methods,),
-                    "supersample": (["true", "false"],),
-                    "rounding_modulus": ("INT", {"default": 8, "min": 8, "max": 1024, "step": 8}),
-                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                    "scheduler": (core.SCHEDULERS,),
-                    "positive": ("CONDITIONING",),
-                    "negative": ("CONDITIONING",),
-                    "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01}),
-                    "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1}),
-                    "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                    "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1}),
+                    "image": ("IMAGE", {"tooltip": "Input image to be upscaled segment by segment."}),
+                    "segs": ("SEGS", {"tooltip": "Segments defining regions for upscaling and detail enhancement."}),
+                    "model": ("MODEL", {"tooltip": "Main model for KSampler."}),
+                    "clip": ("CLIP", {"tooltip": "CLIP model for text encoding."}),
+                    "vae": ("VAE", {"tooltip": "VAE for latent operations."}),
+                    "rescale_factor": ("FLOAT", {"default": 2, "min": 0.01, "max": 100.0, "step": 0.01, "tooltip": "Factor by which to rescale the image before segment-wise processing."}),
+                    "resampling_method": (resampling_methods, {"tooltip": "Method used for initial image rescaling."}),
+                    "supersample": (["true", "false"], {"tooltip": "Whether to use supersampling during initial rescaling."}),
+                    "rounding_modulus": ("INT", {"default": 8, "min": 8, "max": 1024, "step": 8, "tooltip": "Ensures rescaled dimensions are multiples of this value."}),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Seed for KSampler."}),
+                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000, "tooltip": "Number of sampling steps."}),
+                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "tooltip": "Classifier Free Guidance scale."}),
+                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Name of the KSampler."}),
+                    "scheduler": (core.SCHEDULERS, {"tooltip": "Scheduler for KSampler."}),
+                    "positive": ("CONDITIONING", {"tooltip": "Positive conditioning."}),
+                    "negative": ("CONDITIONING", {"tooltip": "Negative conditioning."}),
+                    "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength."}),
+                    "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering for blending enhanced segments back."}),
+                    "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Use inpaint model conditioning for VAE encoding of segments."}),
+                    "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering for noise masks if used on segments."}),
                     },
                 "optional": {
-                    "upscale_model_opt": ("UPSCALE_MODEL",),
-                    "upscaler_hook_opt": ("UPSCALER_HOOK",),
-                    "scheduler_func_opt": ("SCHEDULER_FUNC",),
+                    "upscale_model_opt": ("UPSCALE_MODEL", {"tooltip": "Optional model for initial image upscaling."}),
+                    "upscaler_hook_opt": ("UPSCALER_HOOK", {"tooltip": "Optional hook for customizing the upscaling process."}),
+                    "scheduler_func_opt": ("SCHEDULER_FUNC", {"tooltip": "Optional custom scheduler function."}),
                     }
                 }
 
@@ -1979,27 +1987,27 @@ class SEGSUpscalerPipe:
         resampling_methods = ["lanczos", "nearest", "bilinear", "bicubic"]
 
         return {"required": {
-                    "image": ("IMAGE",),
-                    "segs": ("SEGS",),
-                    "basic_pipe": ("BASIC_PIPE",),
-                    "rescale_factor": ("FLOAT", {"default": 2, "min": 0.01, "max": 100.0, "step": 0.01}),
-                    "resampling_method": (resampling_methods,),
-                    "supersample": (["true", "false"],),
-                    "rounding_modulus": ("INT", {"default": 8, "min": 8, "max": 1024, "step": 8}),
-                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                    "scheduler": (core.SCHEDULERS,),
-                    "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01}),
-                    "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1}),
-                    "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                    "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1}),
+                    "image": ("IMAGE", {"tooltip": "Input image to be upscaled segment by segment."}),
+                    "segs": ("SEGS", {"tooltip": "Segments defining regions for upscaling and detail enhancement."}),
+                    "basic_pipe": ("BASIC_PIPE", {"tooltip": "Basic pipe providing model, CLIP, VAE, positive, and negative conditioning."}),
+                    "rescale_factor": ("FLOAT", {"default": 2, "min": 0.01, "max": 100.0, "step": 0.01, "tooltip": "Factor by which to rescale the image before segment-wise processing."}),
+                    "resampling_method": (resampling_methods, {"tooltip": "Method used for initial image rescaling."}),
+                    "supersample": (["true", "false"], {"tooltip": "Whether to use supersampling during initial rescaling."}),
+                    "rounding_modulus": ("INT", {"default": 8, "min": 8, "max": 1024, "step": 8, "tooltip": "Ensures rescaled dimensions are multiples of this value."}),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Seed for KSampler."}),
+                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000, "tooltip": "Number of sampling steps."}),
+                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "tooltip": "Classifier Free Guidance scale."}),
+                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Name of the KSampler."}),
+                    "scheduler": (core.SCHEDULERS, {"tooltip": "Scheduler for KSampler."}),
+                    "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength."}),
+                    "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering for blending enhanced segments back."}),
+                    "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Use inpaint model conditioning for VAE encoding of segments."}),
+                    "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering for noise masks if used on segments."}),
                     },
                 "optional": {
-                    "upscale_model_opt": ("UPSCALE_MODEL",),
-                    "upscaler_hook_opt": ("UPSCALER_HOOK",),
-                    "scheduler_func_opt": ("SCHEDULER_FUNC",),
+                    "upscale_model_opt": ("UPSCALE_MODEL", {"tooltip": "Optional model for initial image upscaling."}),
+                    "upscaler_hook_opt": ("UPSCALER_HOOK", {"tooltip": "Optional hook for customizing the upscaling process."}),
+                    "scheduler_func_opt": ("SCHEDULER_FUNC", {"tooltip": "Optional custom scheduler function."}),
                     }
                 }
 

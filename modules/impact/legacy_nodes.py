@@ -19,7 +19,7 @@ class MMDetLoader:
     def INPUT_TYPES(s):
         bboxs = ["bbox/"+x for x in folder_paths.get_filename_list("mmdets_bbox")]
         segms = ["segm/"+x for x in folder_paths.get_filename_list("mmdets_segm")]
-        return {"required": {"model_name": (bboxs + segms, )}}
+        return {"required": {"model_name": (bboxs + segms, {"tooltip": "Name of the MMDet model file (from mmdets_bbox or mmdets_segm) to load."})}}
     RETURN_TYPES = ("BBOX_MODEL", "SEGM_MODEL")
     FUNCTION = "load_mmdet"
 
@@ -41,11 +41,11 @@ class BboxDetectorForEach:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "bbox_model": ("BBOX_MODEL", ),
-                        "image": ("IMAGE", ),
-                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "dilation": ("INT", {"default": 10, "min": 0, "max": 255, "step": 1}),
-                        "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1}),
+                        "bbox_model": ("BBOX_MODEL", {"tooltip": "The MMDet bounding box model to use for detection."}),
+                        "image": ("IMAGE", {"tooltip": "The input image for bounding box detection."}),
+                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for bounding box detection. Detections below this value are ignored."}),
+                        "dilation": ("INT", {"default": 10, "min": 0, "max": 255, "step": 1, "tooltip": "Dilation factor for the detected bounding box masks. Positive values expand, negative values erode."}),
+                        "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1, "tooltip": "Factor to expand the detected bounding box to define the cropping region for each segment."}),
                       }
                 }
 
@@ -94,10 +94,10 @@ class SegmDetectorCombined:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "segm_model": ("SEGM_MODEL", ),
-                        "image": ("IMAGE", ),
-                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "dilation": ("INT", {"default": 0, "min": 0, "max": 255, "step": 1}),
+                        "segm_model": ("SEGM_MODEL", {"tooltip": "The MMDet segmentation model to use for detection."}),
+                        "image": ("IMAGE", {"tooltip": "The input image for segmentation."}),
+                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for segmentation detection."}),
+                        "dilation": ("INT", {"default": 0, "min": 0, "max": 255, "step": 1, "tooltip": "Dilation factor for the combined segmentation mask."}),
                       }
                 }
 
@@ -122,10 +122,10 @@ class BboxDetectorCombined(SegmDetectorCombined):
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "bbox_model": ("BBOX_MODEL", ),
-                        "image": ("IMAGE", ),
-                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "dilation": ("INT", {"default": 4, "min": 0, "max": 255, "step": 1}),
+                        "bbox_model": ("BBOX_MODEL", {"tooltip": "The MMDet bounding box model to use."}),
+                        "image": ("IMAGE", {"tooltip": "The input image for bounding box detection."}),
+                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for bounding box detection."}),
+                        "dilation": ("INT", {"default": 4, "min": 0, "max": 255, "step": 1, "tooltip": "Dilation factor for the combined bounding box masks."}),
                       }
                 }
 
@@ -143,11 +143,11 @@ class SegmDetectorForEach:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "segm_model": ("SEGM_MODEL", ),
-                        "image": ("IMAGE", ),
-                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "dilation": ("INT", {"default": 10, "min": 0, "max": 255, "step": 1}),
-                        "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1}),
+                        "segm_model": ("SEGM_MODEL", {"tooltip": "The MMDet segmentation model to use for detection."}),
+                        "image": ("IMAGE", {"tooltip": "The input image for segmentation."}),
+                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for segmentation detection."}),
+                        "dilation": ("INT", {"default": 10, "min": 0, "max": 255, "step": 1, "tooltip": "Dilation factor for the detected segmentation masks."}),
+                        "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1, "tooltip": "Factor to expand the detected segment's bounding box for cropping."}),
                       }
                 }
 
@@ -188,8 +188,8 @@ class SegsMaskCombine:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "segs": ("SEGS", ),
-                        "image": ("IMAGE", ),
+                        "segs": ("SEGS", {"tooltip": "Input SEGS (segments) data whose masks will be combined."}),
+                        "image": ("IMAGE", {"tooltip": "Reference image to define the dimensions of the combined output mask."}),
                       }
                 }
 
@@ -221,13 +221,13 @@ class SegsMaskCombine:
 class MaskPainter(nodes.PreviewImage):
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {"images": ("IMAGE",), },
+        return {"required": {"images": ("IMAGE", {"tooltip": "The base image(s) to be used or painted on."}), },
                 "hidden": {
                     "prompt": "PROMPT",
                     "extra_pnginfo": "EXTRA_PNGINFO",
                 },
-                "optional": {"mask_image": ("IMAGE_PATH",), },
-                "optional": {"image": (["#placeholder"], )},
+                "optional": {"mask_image": ("IMAGE_PATH", {"tooltip": "Optional path to an existing mask image to load."}), },
+                "optional": {"image": (["#placeholder"], {"tooltip": "Internal state placeholder for UI interaction; typically not set manually."})},
                 }
 
     RETURN_TYPES = ("MASK",)

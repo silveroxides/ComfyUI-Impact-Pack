@@ -7,10 +7,10 @@ class SEGSOrderedFilterDetailerHookProvider:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "target": (["area(=w*h)", "width", "height", "x1", "y1", "x2", "y2"],),
-                        "order": ("BOOLEAN", {"default": True, "label_on": "descending", "label_off": "ascending"}),
-                        "take_start": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1}),
-                        "take_count": ("INT", {"default": 1, "min": 0, "max": sys.maxsize, "step": 1}),
+                        "target": (["area(=w*h)", "width", "height", "x1", "y1", "x2", "y2"], {"tooltip": "The attribute of the segment to use for ordering (e.g., area, width, y1 coordinate)."}),
+                        "order": ("BOOLEAN", {"default": True, "label_on": "descending", "label_off": "ascending", "tooltip": "Sort order: 'descending' (True) or 'ascending' (False)."}),
+                        "take_start": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1, "tooltip": "Index of the first segment to take from the ordered list (0-based)."}),
+                        "take_count": ("INT", {"default": 1, "min": 0, "max": sys.maxsize, "step": 1, "tooltip": "Number of segments to take from the ordered list, starting at `take_start`."}),
                      },
                 }
 
@@ -28,10 +28,10 @@ class SEGSRangeFilterDetailerHookProvider:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "target": (["area(=w*h)", "width", "height", "x1", "y1", "x2", "y2", "length_percent"],),
-                        "mode": ("BOOLEAN", {"default": True, "label_on": "inside", "label_off": "outside"}),
-                        "min_value": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1}),
-                        "max_value": ("INT", {"default": 67108864, "min": 0, "max": sys.maxsize, "step": 1}),
+                        "target": (["area(=w*h)", "width", "height", "x1", "y1", "x2", "y2", "length_percent"], {"tooltip": "The attribute of the segment to filter by (e.g., area, width, confidence)."}),
+                        "mode": ("BOOLEAN", {"default": True, "label_on": "inside", "label_off": "outside", "tooltip": "Filter mode: 'inside' (True) keeps segments within the range, 'outside' (False) keeps segments outside the range."}),
+                        "min_value": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1, "tooltip": "Minimum value for the target attribute for a segment to be kept."}),
+                        "max_value": ("INT", {"default": 67108864, "min": 0, "max": sys.maxsize, "step": 1, "tooltip": "Maximum value for the target attribute for a segment to be kept."}),
                      },
                 }
 
@@ -49,9 +49,9 @@ class SEGSLabelFilterDetailerHookProvider:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "segs": ("SEGS", ),
-                        "preset": (['all'] + defs.detection_labels,),
-                        "labels": ("STRING", {"multiline": True, "placeholder": "List the types of segments to be allowed, separated by commas"}),
+                        "segs": ("SEGS", {"tooltip": "Input SEGS data (Note: this input is not directly used by the hook's logic but might be expected by the pipeline)."}),
+                        "preset": (['all'] + defs.detection_labels, {"tooltip": "Select a preset label or 'all'. This primarily influences the UI and is not directly used if 'labels' input is provided."}),
+                        "labels": ("STRING", {"multiline": True, "placeholder": "List the types of segments to be allowed, separated by commas", "tooltip": "Comma-separated list of labels to filter segments by. The hook will keep segments matching these labels."}),
                      },
                 }
 
@@ -69,7 +69,7 @@ class PreviewDetailerHookProvider:
     @classmethod
     def INPUT_TYPES(s):
         return {
-            "required": {"quality": ("INT", {"default": 95, "min": 20, "max": 100})},
+            "required": {"quality": ("INT", {"default": 95, "min": 20, "max": 100, "tooltip": "Quality setting for the generated preview images (typically for WEBP format, 20-100)."})},
             "hidden": {"unique_id": "UNIQUE_ID"},
         }
 

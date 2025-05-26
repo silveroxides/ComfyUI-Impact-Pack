@@ -89,8 +89,8 @@ class LatentSwitch:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "select": ("INT", {"default": 1, "min": 1, "max": 99999, "step": 1}),
-                    "latent1": ("LATENT",),
+                    "select": ("INT", {"default": 1, "min": 1, "max": 99999, "step": 1, "tooltip": "Index of the latent input to select (e.g., latent1, latent2, etc.)."}),
+                    "latent1": ("LATENT", {"tooltip": "First latent input. Additional latent inputs can be added dynamically by connecting to this slot."}),
                     },
                 }
 
@@ -116,18 +116,18 @@ class ImageMaskSwitch:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-            "select": ("INT", {"default": 1, "min": 1, "max": 4, "step": 1}),
-            "images1": ("IMAGE",),
+            "select": ("INT", {"default": 1, "min": 1, "max": 4, "step": 1, "tooltip": "Selects which input pair (imagesX, maskX_opt) to output (1-4)."}),
+            "images1": ("IMAGE", {"tooltip": "First image input."}),
         },
 
             "optional": {
-                "mask1_opt": ("MASK",),
-                "images2_opt": ("IMAGE",),
-                "mask2_opt": ("MASK",),
-                "images3_opt": ("IMAGE",),
-                "mask3_opt": ("MASK",),
-                "images4_opt": ("IMAGE",),
-                "mask4_opt": ("MASK",),
+                "mask1_opt": ("MASK", {"tooltip": "Optional mask for the first image input."}),
+                "images2_opt": ("IMAGE", {"tooltip": "Optional second image input."}),
+                "mask2_opt": ("MASK", {"tooltip": "Optional mask for the second image input."}),
+                "images3_opt": ("IMAGE", {"tooltip": "Optional third image input."}),
+                "mask3_opt": ("MASK", {"tooltip": "Optional mask for the third image input."}),
+                "images4_opt": ("IMAGE", {"tooltip": "Optional fourth image input."}),
+                "mask4_opt": ("MASK", {"tooltip": "Optional mask for the fourth image input."}),
             },
         }
 
@@ -202,7 +202,7 @@ class GeneralInversedSwitch:
 class RemoveNoiseMask:
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {"samples": ("LATENT",)}}
+        return {"required": {"samples": ("LATENT", {"tooltip": "Input latent samples, potentially containing a 'noise_mask' to be removed."})}}
 
     RETURN_TYPES = ("LATENT",)
     FUNCTION = "doit"
@@ -219,14 +219,14 @@ class ImagePasteMasked:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "destination": ("IMAGE",),
-                "source": ("IMAGE",),
-                "x": ("INT", {"default": 0, "min": 0, "max": MAX_RESOLUTION, "step": 1}),
-                "y": ("INT", {"default": 0, "min": 0, "max": MAX_RESOLUTION, "step": 1}),
-                "resize_source": ("BOOLEAN", {"default": False}),
+                "destination": ("IMAGE", {"tooltip": "The base image onto which the source image will be pasted."}),
+                "source": ("IMAGE", {"tooltip": "The image to paste onto the destination image."}),
+                "x": ("INT", {"default": 0, "min": 0, "max": MAX_RESOLUTION, "step": 1, "tooltip": "X-coordinate (left) for pasting the source image on the destination."}),
+                "y": ("INT", {"default": 0, "min": 0, "max": MAX_RESOLUTION, "step": 1, "tooltip": "Y-coordinate (top) for pasting the source image on the destination."}),
+                "resize_source": ("BOOLEAN", {"default": False, "tooltip": "If true, resizes the source image to fit the destination if necessary (behavior from comfy_extras)."}),
             },
             "optional": {
-                "mask": ("MASK",),
+                "mask": ("MASK", {"tooltip": "Optional mask to control the pasting. White areas are pasted, black areas are kept from destination."}),
             }
         }
     RETURN_TYPES = ("IMAGE",)
@@ -246,8 +246,8 @@ class ImpactLogger:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "data": (any_typ,),
-                        "text": ("STRING", {"multiline": True}),
+                        "data": (any_typ, {"tooltip": "Data of any type to be logged to the console."}),
+                        "text": ("STRING", {"multiline": True, "tooltip": "Custom text to display in the node's UI feedback area, often used to display the logged data."}),
                     },
                 "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "unique_id": "UNIQUE_ID"},
                 }
@@ -298,7 +298,7 @@ class MasksToMaskList:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "masks": ("MASK", ),
+                        "masks": ("MASK", {"tooltip": "A batch of masks (tensor) to be converted into a list of individual masks."}),
                       }
                 }
 
@@ -329,7 +329,7 @@ class MaskListToMaskBatch:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "mask": ("MASK", ),
+                        "mask": ("MASK", {"tooltip": "A list of individual masks to be concatenated into a single batch tensor."}),
                       }
                 }
 
@@ -363,7 +363,7 @@ class ImageListToImageBatch:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "images": ("IMAGE", ),
+                        "images": ("IMAGE", {"tooltip": "A list of individual images to be concatenated into a single batch tensor."}),
                       }
                 }
 
@@ -389,7 +389,7 @@ class ImageListToImageBatch:
 class ImageBatchToImageList:
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {"image": ("IMAGE",), }}
+        return {"required": {"image": ("IMAGE", {"tooltip": "A batch of images (tensor) to be split into a list of individual images."}), }}
 
     RETURN_TYPES = ("IMAGE",)
     OUTPUT_IS_LIST = (True,)
@@ -407,7 +407,7 @@ class MakeAnyList:
     def INPUT_TYPES(s):
         return {
             "required": {},
-            "optional": {"value1": (any_typ,), }
+            "optional": {"value1": (any_typ, {"tooltip": "First value for the list. Additional values can be added dynamically."}), }
         }
 
     RETURN_TYPES = (any_typ,)
@@ -429,7 +429,7 @@ class MakeAnyList:
 class MakeMaskList:
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {"mask1": ("MASK",), }}
+        return {"required": {"mask1": ("MASK", {"tooltip": "First mask for the list. Additional masks can be added dynamically."}), }}
 
     RETURN_TYPES = ("MASK",)
     OUTPUT_IS_LIST = (True,)
@@ -450,7 +450,7 @@ class NthItemOfAnyList:
     @classmethod
     def INPUT_TYPES(s):
         return {"required":  {
-                    "any_list": (any_typ,),
+                    "any_list": (any_typ, {"tooltip": "The list from which to select an item."}),
                     "index": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1, "tooltip": "The index of the item you want to select from the list."}),
                     }
         }
@@ -474,7 +474,8 @@ class NthItemOfAnyList:
 class MakeImageList:
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {"image1": ("IMAGE",), }}
+        return {"required": {"image1": ("IMAGE", {"tooltip": "First image for the list. Additional images can be added dynamically."}), }}
+        return {"required": {"image1": ("IMAGE", {"tooltip": "First image for the batch. Additional images can be added dynamically."}), }}
 
     RETURN_TYPES = ("IMAGE",)
     OUTPUT_IS_LIST = (True,)
@@ -519,7 +520,7 @@ class MakeImageBatch:
 class MakeMaskBatch:
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {"mask1": ("MASK",), }}
+        return {"required": {"mask1": ("MASK", {"tooltip": "First mask for the batch. Additional masks can be added dynamically."}), }}
 
     RETURN_TYPES = ("MASK",)
     FUNCTION = "doit"

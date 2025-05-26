@@ -203,7 +203,7 @@ class MMDetDetectorProvider:
     def INPUT_TYPES(s):
         bboxs = ["bbox/"+x for x in folder_paths.get_filename_list("mmdets_bbox")]
         segms = ["segm/"+x for x in folder_paths.get_filename_list("mmdets_segm")]
-        return {"required": {"model_name": (bboxs + segms, )}}
+        return {"required": {"model_name": (bboxs + segms, {"tooltip": "Name of the MMDet model file (from mmdets_bbox or mmdets_segm directories) to load. The corresponding .py config file must exist in the same directory."})}}
     RETURN_TYPES = ("BBOX_DETECTOR", "SEGM_DETECTOR")
     FUNCTION = "load_mmdet"
 

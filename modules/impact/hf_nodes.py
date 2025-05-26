@@ -18,9 +18,9 @@ class HF_TransformersClassifierProvider:
     def INPUT_TYPES(s):
         global hf_transformer_model_urls
         return {"required": {
-                        "preset_repo_id": (hf_transformer_model_urls + ['Manual repo id'],),
-                        "manual_repo_id": ("STRING", {"multiline": False}),
-                        "device_mode": (["AUTO", "Prefer GPU", "CPU"],),
+                        "preset_repo_id": (hf_transformer_model_urls + ['Manual repo id'], {"tooltip": "Select a preset Hugging Face repository ID for the image classification model, or choose 'Manual repo id' to specify one."}),
+                        "manual_repo_id": ("STRING", {"multiline": False, "tooltip": "Specify the Hugging Face repository ID manually if 'Manual repo id' is selected in `preset_repo_id`."}),
+                        "device_mode": (["AUTO", "Prefer GPU", "CPU"], {"tooltip": "Select the device to run the Hugging Face transformer model on. 'AUTO' will prefer GPU if available."}),
                      },
                 }
 
@@ -73,13 +73,13 @@ class SEGS_Classify:
     def INPUT_TYPES(s):
         global preset_classify_expr
         return {"required": {
-                        "classifier": ("TRANSFORMERS_CLASSIFIER",),
-                        "segs": ("SEGS",),
-                        "preset_expr": (preset_classify_expr + ['Manual expr'],),
-                        "manual_expr": ("STRING", {"multiline": False}),
+                        "classifier": ("TRANSFORMERS_CLASSIFIER", {"tooltip": "The Hugging Face image classification pipeline to use for classifying segment images."}),
+                        "segs": ("SEGS", {"tooltip": "Input SEGS data. Images cropped from these segments will be classified."}),
+                        "preset_expr": (preset_classify_expr + ['Manual expr'], {"tooltip": "Select a preset classification expression or choose 'Manual expr' to define a custom filtering logic."}),
+                        "manual_expr": ("STRING", {"multiline": False, "tooltip": "Define a custom classification expression if 'Manual expr' is selected. Example: '#Female > 0.5' or 'label_A > label_B'."}),
                      },
                 "optional": {
-                     "ref_image_opt": ("IMAGE", ),
+                     "ref_image_opt": ("IMAGE", {"tooltip": "Optional reference image. If provided and segments lack their own images, images will be cropped from this reference for classification."}),
                     }
                 }
 

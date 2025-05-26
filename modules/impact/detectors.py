@@ -54,7 +54,7 @@ class SAMDetectorSegmented:
                         "detection_hint": (["center-1", "horizontal-2", "vertical-2", "rect-4", "diamond-4", "mask-area",
                                             "mask-points", "mask-point-bbox", "none"], DETECTION_HINT_TOOLTIP),
                         "dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1, "tooltip": DILATION_TOOLTIP}),
-                        "threshold": ("FLOAT", {"default": 0.93, "min": 0.0, "max": 1.0, "step": 0.01}),
+                        "threshold": ("FLOAT", {"default": 0.93, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Sensitivity threshold for SAM mask detection. Higher values yield more specific, narrower masks."}),
                         "bbox_expansion": ("INT", {"default": 0, "min": 0, "max": 1000, "step": 1, "tooltip": BBOX_EXPANSION_TOOLTIP}),
                         "mask_hint_threshold": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": MASK_HINT_THRESHOLD_TOOLTIP}),
                         "mask_hint_use_negative": (["False", "Small", "Outter"], {"tooltip": MASK_HINT_USE_NEGATIVE_TOOLTIP})
@@ -79,15 +79,15 @@ class BboxDetectorForEach:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "bbox_detector": ("BBOX_DETECTOR", ),
-                        "image": ("IMAGE", ),
-                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1}),
-                        "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1}),
-                        "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10}),
-                        "labels": ("STRING", {"multiline": True, "default": "all", "placeholder": "List the types of segments to be allowed, separated by commas"}),
+                        "bbox_detector": ("BBOX_DETECTOR", {"tooltip": "The bounding box detector model/object to use for detection."}),
+                        "image": ("IMAGE", {"tooltip": "The input image for bounding box detection."}),
+                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for bounding box detection. Detections below this value are ignored."}),
+                        "dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for the detected bounding box masks. Positive values expand, negative values erode."}),
+                        "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1, "tooltip": "Factor to expand the detected bounding box to define the cropping region for each segment."}),
+                        "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10, "tooltip": "Minimum size (width or height) for a detected bounding box to be processed. Smaller detections are dropped."}),
+                        "labels": ("STRING", {"multiline": True, "default": "all", "placeholder": "List the types of segments to be allowed, separated by commas", "tooltip": "Comma-separated list of labels to keep. Segments with other labels will be filtered out. 'all' keeps everything."}),
                       },
-                "optional": {"detailer_hook": ("DETAILER_HOOK",), }
+                "optional": {"detailer_hook": ("DETAILER_HOOK", {"tooltip": "Optional hook for customizing the detailing process."}), }
                 }
 
     RETURN_TYPES = ("SEGS", )
@@ -113,15 +113,15 @@ class SegmDetectorForEach:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "segm_detector": ("SEGM_DETECTOR", ),
-                        "image": ("IMAGE", ),
-                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1}),
-                        "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1}),
-                        "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10}),
-                        "labels": ("STRING", {"multiline": True, "default": "all", "placeholder": "List the types of segments to be allowed, separated by commas"}),
+                        "segm_detector": ("SEGM_DETECTOR", {"tooltip": "The segmentation detector model/object to use for detection."}),
+                        "image": ("IMAGE", {"tooltip": "The input image for segmentation detection."}),
+                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for segmentation detection. Detections below this value are ignored."}),
+                        "dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for the detected segmentation masks. Positive values expand, negative values erode."}),
+                        "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1, "tooltip": "Factor to expand the detected segmentation mask's bounding box to define the cropping region."}),
+                        "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10, "tooltip": "Minimum size (width or height) of the bounding box of a detected segment to be processed. Smaller segments are dropped."}),
+                        "labels": ("STRING", {"multiline": True, "default": "all", "placeholder": "List the types of segments to be allowed, separated by commas", "tooltip": "Comma-separated list of labels to keep. Segments with other labels will be filtered out. 'all' keeps everything."}),
                       },
-                "optional": {"detailer_hook": ("DETAILER_HOOK",), }
+                "optional": {"detailer_hook": ("DETAILER_HOOK", {"tooltip": "Optional hook for customizing the detailing process."}), }
                 }
 
     RETURN_TYPES = ("SEGS", )
@@ -147,10 +147,10 @@ class SegmDetectorCombined:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "segm_detector": ("SEGM_DETECTOR", ),
-                        "image": ("IMAGE", ),
-                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1}),
+                        "segm_detector": ("SEGM_DETECTOR", {"tooltip": "The segmentation detector model/object to use for detection."}),
+                        "image": ("IMAGE", {"tooltip": "The input image for segmentation detection."}),
+                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for segmentation detection."}),
+                        "dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for the combined segmentation mask."}),
                       }
                 }
 
@@ -172,10 +172,10 @@ class BboxDetectorCombined(SegmDetectorCombined):
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "bbox_detector": ("BBOX_DETECTOR", ),
-                        "image": ("IMAGE", ),
-                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "dilation": ("INT", {"default": 4, "min": -512, "max": 512, "step": 1}),
+                        "bbox_detector": ("BBOX_DETECTOR", {"tooltip": "The bounding box detector model/object to use."}),
+                        "image": ("IMAGE", {"tooltip": "The input image for bounding box detection."}),
+                        "threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for bounding box detection."}),
+                        "dilation": ("INT", {"default": 4, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for the combined bounding box masks."}),
                       }
                 }
 
@@ -192,25 +192,25 @@ class SimpleDetectorForEach:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "bbox_detector": ("BBOX_DETECTOR", ),
-                        "image": ("IMAGE", ),
+                        "bbox_detector": ("BBOX_DETECTOR", {"tooltip": "Primary bounding box detector used for initial detection."}),
+                        "image": ("IMAGE", {"tooltip": "The input image for detection."}),
 
-                        "bbox_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "bbox_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1}),
+                        "bbox_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for the primary bounding box detector."}),
+                        "bbox_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for masks from the primary bounding box detector."}),
 
-                        "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1}),
-                        "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10}),
+                        "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1, "tooltip": "Factor to expand the detected bounding box to define the cropping region."}),
+                        "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10, "tooltip": "Minimum size for a detected bounding box to be processed."}),
 
-                        "sub_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "sub_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1}),
-                        "sub_bbox_expansion": ("INT", {"default": 0, "min": 0, "max": 1000, "step": 1}),
+                        "sub_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Threshold for sub-detection (SAM or segmentation detector) if used."}),
+                        "sub_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for masks from sub-detection (SAM or segmentation detector)."}),
+                        "sub_bbox_expansion": ("INT", {"default": 0, "min": 0, "max": 1000, "step": 1, "tooltip": "Expansion factor for bounding boxes when passed to SAM or sub-segmentation."}),
 
-                        "sam_mask_hint_threshold": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01}),
+                        "sam_mask_hint_threshold": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Threshold for using parts of a mask as hints for SAM detection, if SAM is used."}),
                       },
                 "optional": {
-                        "post_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1}),
+                        "post_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor applied to the final segment masks after all detection steps."}),
                         "sam_model_opt": ("SAM_MODEL", SAM_MODEL_TOOLTIP_OPTIONAL),
-                        "segm_detector_opt": ("SEGM_DETECTOR", ),
+                        "segm_detector_opt": ("SEGM_DETECTOR", {"tooltip": "Optional segmentation detector to refine masks from the bounding box detector."}),
                       }
                 }
 
@@ -260,23 +260,23 @@ class SimpleDetectorForEachPipe:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "detailer_pipe": ("DETAILER_PIPE", ),
-                        "image": ("IMAGE", ),
+                        "detailer_pipe": ("DETAILER_PIPE", {"tooltip": "Detailer pipe providing models (bbox_detector, segm_detector_opt, sam_model_opt) and detailer_hook."}),
+                        "image": ("IMAGE", {"tooltip": "The input image for detection."}),
 
-                        "bbox_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "bbox_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1}),
+                        "bbox_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for the primary bounding box detector."}),
+                        "bbox_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for masks from the primary bounding box detector."}),
 
-                        "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1}),
-                        "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10}),
+                        "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1, "tooltip": "Factor to expand the detected bounding box to define the cropping region."}),
+                        "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10, "tooltip": "Minimum size for a detected bounding box to be processed."}),
 
-                        "sub_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "sub_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1}),
-                        "sub_bbox_expansion": ("INT", {"default": 0, "min": 0, "max": 1000, "step": 1}),
+                        "sub_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Threshold for sub-detection (SAM or segmentation detector) if used."}),
+                        "sub_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for masks from sub-detection (SAM or segmentation detector)."}),
+                        "sub_bbox_expansion": ("INT", {"default": 0, "min": 0, "max": 1000, "step": 1, "tooltip": "Expansion factor for bounding boxes when passed to SAM or sub-segmentation."}),
 
-                        "sam_mask_hint_threshold": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01}),
+                        "sam_mask_hint_threshold": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Threshold for using parts of a mask as hints for SAM detection, if SAM is used."}),
                       },
                 "optional": {
-                        "post_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1}),
+                        "post_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor applied to the final segment masks after all detection steps."}),
                       }
                 }
 
@@ -303,26 +303,26 @@ class SimpleDetectorForAnimateDiff:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "bbox_detector": ("BBOX_DETECTOR", ),
-                        "image_frames": ("IMAGE", ),
+                        "bbox_detector": ("BBOX_DETECTOR", {"tooltip": "Primary bounding box detector used for initial detection on each frame."}),
+                        "image_frames": ("IMAGE", {"tooltip": "Input image frames for detection."}),
 
-                        "bbox_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "bbox_dilation": ("INT", {"default": 0, "min": -255, "max": 255, "step": 1}),
+                        "bbox_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for the primary bounding box detector."}),
+                        "bbox_dilation": ("INT", {"default": 0, "min": -255, "max": 255, "step": 1, "tooltip": "Dilation factor for masks from the primary bounding box detector."}),
 
-                        "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1}),
-                        "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10}),
+                        "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1, "tooltip": "Factor to expand the detected bounding box to define the cropping region."}),
+                        "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10, "tooltip": "Minimum size for a detected bounding box to be processed."}),
 
-                        "sub_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "sub_dilation": ("INT", {"default": 0, "min": -255, "max": 255, "step": 1}),
-                        "sub_bbox_expansion": ("INT", {"default": 0, "min": 0, "max": 1000, "step": 1}),
+                        "sub_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Threshold for sub-detection (SAM or segmentation detector) if used."}),
+                        "sub_dilation": ("INT", {"default": 0, "min": -255, "max": 255, "step": 1, "tooltip": "Dilation factor for masks from sub-detection (SAM or segmentation detector)."}),
+                        "sub_bbox_expansion": ("INT", {"default": 0, "min": 0, "max": 1000, "step": 1, "tooltip": "Expansion factor for bounding boxes when passed to SAM or sub-segmentation."}),
 
-                        "sam_mask_hint_threshold": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01}),
+                        "sam_mask_hint_threshold": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Threshold for using parts of a mask as hints for SAM detection, if SAM is used."}),
                       },
                 "optional": {
-                        "masking_mode": (["Pivot SEGS", "Combine neighboring frames", "Don't combine"],),
-                        "segs_pivot": (["Combined mask", "1st frame mask"],),
+                        "masking_mode": (["Pivot SEGS", "Combine neighboring frames", "Don't combine"], {"tooltip": "Strategy for combining masks across frames: 'Pivot SEGS' uses detections from a reference, 'Combine neighboring frames' merges masks from adjacent frames, 'Don't combine' processes each frame's mask independently for its segments."}),
+                        "segs_pivot": (["Combined mask", "1st frame mask"], {"tooltip": "Determines the reference for 'Pivot SEGS' masking mode: 'Combined mask' uses a mask merged from all frames, '1st frame mask' uses the mask from the first frame."}),
                         "sam_model_opt": ("SAM_MODEL", SAM_MODEL_TOOLTIP_OPTIONAL),
-                        "segm_detector_opt": ("SEGM_DETECTOR", ),
+                        "segm_detector_opt": ("SEGM_DETECTOR", {"tooltip": "Optional segmentation detector to refine masks from the bounding box detector for each frame."}),
                  }
                 }
 

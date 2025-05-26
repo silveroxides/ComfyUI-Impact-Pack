@@ -55,7 +55,7 @@ add_folder_path_and_extensions("onnx", [os.path.join(model_path, "onnx")], {'.on
 class ONNXDetectorProvider:
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {"model_name": (folder_paths.get_filename_list("onnx"), )}}
+        return {"required": {"model_name": (folder_paths.get_filename_list("onnx"), {"tooltip": "Name of the ONNX model file to load from the 'onnx' models directory."})}}
 
     RETURN_TYPES = ("BBOX_DETECTOR", )
     FUNCTION = "load_onnx"
@@ -169,12 +169,12 @@ class ONNXDetectorForEach:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "onnx_detector": ("ONNX_DETECTOR",),
-                    "image": ("IMAGE",),
-                    "threshold": ("FLOAT", {"default": 0.8, "min": 0.0, "max": 1.0, "step": 0.01}),
-                    "dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1}),
-                    "crop_factor": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 100, "step": 0.1}),
-                    "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10}),
+                    "onnx_detector": ("ONNX_DETECTOR", {"tooltip": "The ONNX detector object provided by an ONNXDetectorProvider node."}),
+                    "image": ("IMAGE", {"tooltip": "The input image for ONNX-based detection."}),
+                    "threshold": ("FLOAT", {"default": 0.8, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for ONNX detection. Detections below this value are ignored."}),
+                    "dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for the detected masks. Positive values expand, negative values erode."}),
+                    "crop_factor": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 100, "step": 0.1, "tooltip": "Factor to expand the detected bounding box to define the cropping region."}),
+                    "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10, "tooltip": "Minimum size (width or height) for a detected bounding box to be processed."}),
                     }
                 }
 
@@ -194,36 +194,35 @@ class DetailerForEach:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "image": ("IMAGE", ),
-                    "segs": ("SEGS", ),
+                    "image": ("IMAGE", {"tooltip": "The input image to be detailed."}),
+                    "segs": ("SEGS", {"tooltip": "Segments (SEGS) data defining regions to detail."}),
                     "model": ("MODEL", {"tooltip": "If the `ImpactDummyInput` is connected to the model, the inference stage is skipped."}),
-                    "clip": ("CLIP",),
-                    "vae": ("VAE",),
-                    "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8}),
-                    "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region"}),
-                    "max_size": ("FLOAT", {"default": 1024, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8}),
-                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                    "scheduler": (core.SCHEDULERS,),
-                    "positive": ("CONDITIONING",),
-                    "negative": ("CONDITIONING",),
-                    "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01}),
-                    "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1}),
-                    "noise_mask": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled"}),
-                    "force_inpaint": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled"}),
-                    "wildcard": ("STRING", {"multiline": True, "dynamicPrompts": False}),
-
-                    "cycle": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1}),
+                    "clip": ("CLIP", {"tooltip": "CLIP model for encoding text prompts."}),
+                    "vae": ("VAE", {"tooltip": "VAE model for encoding/decoding latents."}),
+                    "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8, "tooltip": "Target size for guiding the detail enhancement process. Segments are scaled relative to this size."}),
+                    "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region", "tooltip": "Determines if 'guide_size' refers to the bounding box ('bbox') or the cropped region ('crop_region') for scaling."}),
+                    "max_size": ("FLOAT", {"default": 1024, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8, "tooltip": "Maximum size for a segment after scaling for detail enhancement."}),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Seed for the random number generator used in the sampling process."}),
+                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000, "tooltip": "Number of sampling steps for the detail enhancement process."}),
+                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "tooltip": "Classifier Free Guidance scale."}),
+                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Name of the KSampler to use."}),
+                    "scheduler": (core.SCHEDULERS, {"tooltip": "Scheduler for the KSampler."}),
+                    "positive": ("CONDITIONING", {"tooltip": "Positive conditioning for the detail enhancement."}),
+                    "negative": ("CONDITIONING", {"tooltip": "Negative conditioning for the detail enhancement."}),
+                    "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength for the detail enhancement process."}),
+                    "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering amount (in pixels) for blending the detailed segment back into the image."}),
+                    "noise_mask": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled", "tooltip": "Enable or disable the use of a noise mask derived from the segment's mask."}),
+                    "force_inpaint": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled", "tooltip": "Force inpainting even if the segment is already large enough."}),
+                    "wildcard": ("STRING", {"multiline": True, "dynamicPrompts": False, "tooltip": "Wildcard prompt text to be processed for each segment."}),
+                    "cycle": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1, "tooltip": "Number of detailing cycles to perform on each segment."}),
                    },
                 "optional": {
-                    "detailer_hook": ("DETAILER_HOOK",),
-                    "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                    "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1}),
-                    "scheduler_func_opt": ("SCHEDULER_FUNC",),
-                    "tiled_encode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                    "tiled_decode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
+                    "detailer_hook": ("DETAILER_HOOK", {"tooltip": "Optional hook for customizing the detailing process."}),
+                    "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Use inpaint model conditioning for the VAE encoding."}),
+                    "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering amount for the noise mask if `noise_mask` is enabled."}),
+                    "scheduler_func_opt": ("SCHEDULER_FUNC", {"tooltip": "Optional custom scheduler function."}),
+                    "tiled_encode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Enable tiled VAE encoding for potentially lower memory usage."}),
+                    "tiled_decode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Enable tiled VAE decoding for potentially lower memory usage."}),
                    }
                 }
 
@@ -410,34 +409,33 @@ class DetailerForEachPipe:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                      "image": ("IMAGE", ),
-                      "segs": ("SEGS", ),
-                      "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8}),
-                      "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region"}),
-                      "max_size": ("FLOAT", {"default": 1024, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8}),
-                      "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                      "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                      "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                      "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                      "scheduler": (core.SCHEDULERS,),
-                      "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01}),
-                      "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1}),
-                      "noise_mask": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled"}),
-                      "force_inpaint": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled"}),
+                      "image": ("IMAGE", {"tooltip": "The input image to be detailed."}),
+                      "segs": ("SEGS", {"tooltip": "Segments (SEGS) data defining regions to detail."}),
+                      "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8, "tooltip": "Target size for guiding the detail enhancement process."}),
+                      "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region", "tooltip": "Determines if 'guide_size' refers to bounding box or crop region."}),
+                      "max_size": ("FLOAT", {"default": 1024, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8, "tooltip": "Maximum size for a segment after scaling."}),
+                      "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Seed for the sampler."}),
+                      "steps": ("INT", {"default": 20, "min": 1, "max": 10000, "tooltip": "Number of sampling steps."}),
+                      "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "tooltip": "Classifier Free Guidance scale."}),
+                      "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Name of the KSampler to use."}),
+                      "scheduler": (core.SCHEDULERS, {"tooltip": "Scheduler for the KSampler."}),
+                      "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength."}),
+                      "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering for mask blending."}),
+                      "noise_mask": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled", "tooltip": "Use segment's mask as noise mask."}),
+                      "force_inpaint": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled", "tooltip": "Force inpainting even if segment is large."}),
                       "basic_pipe": ("BASIC_PIPE", {"tooltip": "If the `ImpactDummyInput` is connected to the model in the basic_pipe, the inference stage is skipped."}),
-                      "wildcard": ("STRING", {"multiline": True, "dynamicPrompts": False}),
-                      "refiner_ratio": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0}),
-
-                      "cycle": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1}),
+                      "wildcard": ("STRING", {"multiline": True, "dynamicPrompts": False, "tooltip": "Wildcard prompt for segments."}),
+                      "refiner_ratio": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0, "tooltip": "Ratio of steps to switch to refiner."}),
+                      "cycle": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1, "tooltip": "Number of detailing cycles."}),
                      },
                 "optional": {
-                      "detailer_hook": ("DETAILER_HOOK",),
-                      "refiner_basic_pipe_opt": ("BASIC_PIPE",),
-                      "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                      "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1}),
-                      "scheduler_func_opt": ("SCHEDULER_FUNC",),
-                      "tiled_encode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                      "tiled_decode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
+                      "detailer_hook": ("DETAILER_HOOK", {"tooltip": "Optional hook for customizing detailing."}),
+                      "refiner_basic_pipe_opt": ("BASIC_PIPE", {"tooltip": "Optional basic pipe for refiner stage."}),
+                      "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Use inpaint model conditioning for VAE."}),
+                      "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering for noise mask if used."}),
+                      "scheduler_func_opt": ("SCHEDULER_FUNC", {"tooltip": "Optional custom scheduler function."}),
+                      "tiled_encode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Enable tiled VAE encoding."}),
+                      "tiled_decode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Enable tiled VAE decoding."}),
                      }
                 }
 
@@ -486,52 +484,52 @@ class FaceDetailer:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "image": ("IMAGE", ),
+                     "image": ("IMAGE", {"tooltip": "The input image to be detailed."}),
                      "model": ("MODEL", {"tooltip": "If the `ImpactDummyInput` is connected to the model, the inference stage is skipped."}),
-                     "clip": ("CLIP",),
-                     "vae": ("VAE",),
-                     "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8}),
-                     "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region"}),
-                     "max_size": ("FLOAT", {"default": 1024, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8}),
-                     "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                     "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                     "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                     "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                     "scheduler": (core.SCHEDULERS,),
-                     "positive": ("CONDITIONING",),
-                     "negative": ("CONDITIONING",),
-                     "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01}),
-                     "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1}),
-                     "noise_mask": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled"}),
-                     "force_inpaint": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled"}),
+                     "clip": ("CLIP", {"tooltip": "CLIP model for encoding text prompts."}),
+                     "vae": ("VAE", {"tooltip": "VAE model for encoding/decoding latents."}),
+                     "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8, "tooltip": "Target size for guiding the detail enhancement process. Segments are scaled relative to this size."}),
+                     "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region", "tooltip": "Determines if 'guide_size' refers to the bounding box ('bbox') or the cropped region ('crop_region') for scaling."}),
+                     "max_size": ("FLOAT", {"default": 1024, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8, "tooltip": "Maximum size for a segment after scaling for detail enhancement."}),
+                     "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Seed for the random number generator used in the sampling process."}),
+                     "steps": ("INT", {"default": 20, "min": 1, "max": 10000, "tooltip": "Number of sampling steps for the detail enhancement process."}),
+                     "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "tooltip": "Classifier Free Guidance scale."}),
+                     "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Name of the KSampler to use."}),
+                     "scheduler": (core.SCHEDULERS, {"tooltip": "Scheduler for the KSampler."}),
+                     "positive": ("CONDITIONING", {"tooltip": "Positive conditioning for the detail enhancement."}),
+                     "negative": ("CONDITIONING", {"tooltip": "Negative conditioning for the detail enhancement."}),
+                     "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength for the detail enhancement process."}),
+                     "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering amount (in pixels) for blending the detailed segment back into the image."}),
+                     "noise_mask": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled", "tooltip": "Enable or disable the use of a noise mask derived from the segment's mask."}),
+                     "force_inpaint": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled", "tooltip": "Force inpainting even if the segment is already large enough."}),
 
-                     "bbox_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                     "bbox_dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1}),
-                     "bbox_crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 10, "step": 0.1}),
+                     "bbox_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for the bounding box detector."}),
+                     "bbox_dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for bounding box masks."}),
+                     "bbox_crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 10, "step": 0.1, "tooltip": "Factor to expand bounding box for cropping."}),
 
-                     "sam_detection_hint": (["center-1", "horizontal-2", "vertical-2", "rect-4", "diamond-4", "mask-area", "mask-points", "mask-point-bbox", "none"],),
-                     "sam_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1}),
-                     "sam_threshold": ("FLOAT", {"default": 0.93, "min": 0.0, "max": 1.0, "step": 0.01}),
-                     "sam_bbox_expansion": ("INT", {"default": 0, "min": 0, "max": 1000, "step": 1}),
-                     "sam_mask_hint_threshold": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01}),
-                     "sam_mask_hint_use_negative": (["False", "Small", "Outter"],),
+                     "sam_detection_hint": (["center-1", "horizontal-2", "vertical-2", "rect-4", "diamond-4", "mask-area", "mask-points", "mask-point-bbox", "none"], {"tooltip": "Hint type for SAM (Segment Anything Model) if used."}),
+                     "sam_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for SAM-generated masks."}),
+                     "sam_threshold": ("FLOAT", {"default": 0.93, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for SAM mask generation."}),
+                     "sam_bbox_expansion": ("INT", {"default": 0, "min": 0, "max": 1000, "step": 1, "tooltip": "Expansion factor for bounding box hints passed to SAM."}),
+                     "sam_mask_hint_threshold": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Threshold for using parts of a mask as hints for SAM."}),
+                     "sam_mask_hint_use_negative": (["False", "Small", "Outter"], {"tooltip": "Strategy for using negative points as hints for SAM."}),
 
-                     "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10}),
+                     "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10, "tooltip": "Minimum size for detected bounding boxes to be processed."}),
 
-                     "bbox_detector": ("BBOX_DETECTOR", ),
-                     "wildcard": ("STRING", {"multiline": True, "dynamicPrompts": False}),
+                     "bbox_detector": ("BBOX_DETECTOR", {"tooltip": "The bounding box detector model/object to use."}),
+                     "wildcard": ("STRING", {"multiline": True, "dynamicPrompts": False, "tooltip": "Wildcard prompt text to be processed for each segment."}),
 
-                     "cycle": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1}),
+                     "cycle": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1, "tooltip": "Number of detailing cycles to perform on each segment."}),
                      },
                 "optional": {
-                    "sam_model_opt": ("SAM_MODEL", ),
-                    "segm_detector_opt": ("SEGM_DETECTOR", ),
-                    "detailer_hook": ("DETAILER_HOOK",),
-                    "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                    "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1}),
-                    "scheduler_func_opt": ("SCHEDULER_FUNC",),
-                    "tiled_encode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                    "tiled_decode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
+                    "sam_model_opt": ("SAM_MODEL", {"tooltip": "Optional SAM model for refining segment masks."}),
+                    "segm_detector_opt": ("SEGM_DETECTOR", {"tooltip": "Optional segmentation detector for refining masks."}),
+                    "detailer_hook": ("DETAILER_HOOK", {"tooltip": "Optional hook for customizing the detailing process."}),
+                    "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Use inpaint model conditioning for the VAE encoding."}),
+                    "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering amount for the noise mask if `noise_mask` is enabled."}),
+                    "scheduler_func_opt": ("SCHEDULER_FUNC", {"tooltip": "Optional custom scheduler function."}),
+                    "tiled_encode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Enable tiled VAE encoding for potentially lower memory usage."}),
+                    "tiled_decode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Enable tiled VAE decoding for potentially lower memory usage."}),
                 }}
 
     RETURN_TYPES = ("IMAGE", "IMAGE", "IMAGE", "MASK", "DETAILER_PIPE", "IMAGE")
@@ -998,27 +996,27 @@ class PixelTiledKSampleUpscalerProvider:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "scale_method": (s.upscale_methods,),
-                    "model": ("MODEL",),
-                    "vae": ("VAE",),
-                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS, ),
-                    "scheduler": (comfy.samplers.KSampler.SCHEDULERS, ),
-                    "positive": ("CONDITIONING", ),
-                    "negative": ("CONDITIONING", ),
-                    "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-                    "tile_width": ("INT", {"default": 512, "min": 320, "max": MAX_RESOLUTION, "step": 64}),
-                    "tile_height": ("INT", {"default": 512, "min": 320, "max": MAX_RESOLUTION, "step": 64}),
-                    "tiling_strategy": (["random", "padded", 'simple'], ),
+                    "scale_method": (s.upscale_methods, {"tooltip": "Resampling method for scaling in pixel space."}),
+                    "model": ("MODEL", {"tooltip": "Main model for the KSampler."}),
+                    "vae": ("VAE", {"tooltip": "VAE for pixel space operations during upscaling."}),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Seed for the KSampler."}),
+                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000, "tooltip": "Number of sampling steps."}),
+                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "tooltip": "Classifier Free Guidance scale."}),
+                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Name of the KSampler."}),
+                    "scheduler": (comfy.samplers.KSampler.SCHEDULERS, {"tooltip": "Scheduler for the KSampler."}),
+                    "positive": ("CONDITIONING", {"tooltip": "Positive conditioning."}),
+                    "negative": ("CONDITIONING", {"tooltip": "Negative conditioning."}),
+                    "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength."}),
+                    "tile_width": ("INT", {"default": 512, "min": 320, "max": MAX_RESOLUTION, "step": 64, "tooltip": "Width of tiles for tiled KSampling."}),
+                    "tile_height": ("INT", {"default": 512, "min": 320, "max": MAX_RESOLUTION, "step": 64, "tooltip": "Height of tiles for tiled KSampling."}),
+                    "tiling_strategy": (["random", "padded", 'simple'], {"tooltip": "Strategy for tile placement (random, padded, simple)."}),
                     },
                 "optional": {
-                        "upscale_model_opt": ("UPSCALE_MODEL", ),
-                        "pk_hook_opt": ("PK_HOOK", ),
-                        "tile_cnet_opt": ("CONTROL_NET", ),
-                        "tile_cnet_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-                        "overlap": ("INT", {"default": 64, "min": 0, "max": 4096, "step": 32}),
+                        "upscale_model_opt": ("UPSCALE_MODEL", {"tooltip": "Optional upscale model for pixel space upscaling before sampling."}),
+                        "pk_hook_opt": ("PK_HOOK", {"tooltip": "Optional PixelKSample hook for customizing the sampling process."}),
+                        "tile_cnet_opt": ("CONTROL_NET", {"tooltip": "Optional ControlNet for tiled sampling."}),
+                        "tile_cnet_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Strength of the tile ControlNet if provided."}),
+                        "overlap": ("INT", {"default": 64, "min": 0, "max": 4096, "step": 32, "tooltip": "Tile overlap for tiled operations."}),
                     }
                 }
 
@@ -1047,23 +1045,23 @@ class PixelTiledKSampleUpscalerProviderPipe:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "scale_method": (s.upscale_methods,),
-                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS, ),
-                    "scheduler": (comfy.samplers.KSampler.SCHEDULERS, ),
-                    "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-                    "tile_width": ("INT", {"default": 512, "min": 320, "max": MAX_RESOLUTION, "step": 64}),
-                    "tile_height": ("INT", {"default": 512, "min": 320, "max": MAX_RESOLUTION, "step": 64}),
-                    "tiling_strategy": (["random", "padded", 'simple'], ),
-                    "basic_pipe": ("BASIC_PIPE",)
+                    "scale_method": (s.upscale_methods, {"tooltip": "Resampling method for scaling in pixel space."}),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Seed for the KSampler."}),
+                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000, "tooltip": "Number of sampling steps."}),
+                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "tooltip": "Classifier Free Guidance scale."}),
+                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Name of the KSampler."}),
+                    "scheduler": (comfy.samplers.KSampler.SCHEDULERS, {"tooltip": "Scheduler for the KSampler."}),
+                    "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength."}),
+                    "tile_width": ("INT", {"default": 512, "min": 320, "max": MAX_RESOLUTION, "step": 64, "tooltip": "Width of tiles for tiled KSampling."}),
+                    "tile_height": ("INT", {"default": 512, "min": 320, "max": MAX_RESOLUTION, "step": 64, "tooltip": "Height of tiles for tiled KSampling."}),
+                    "tiling_strategy": (["random", "padded", 'simple'], {"tooltip": "Strategy for tile placement (random, padded, simple)."}),
+                    "basic_pipe": ("BASIC_PIPE", {"tooltip": "Basic pipe providing model, VAE, positive and negative conditioning."})
                     },
                 "optional": {
-                        "upscale_model_opt": ("UPSCALE_MODEL", ),
-                        "pk_hook_opt": ("PK_HOOK", ),
-                        "tile_cnet_opt": ("CONTROL_NET", ),
-                        "tile_cnet_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                        "upscale_model_opt": ("UPSCALE_MODEL", {"tooltip": "Optional upscale model for pixel space upscaling before sampling."}),
+                        "pk_hook_opt": ("PK_HOOK", {"tooltip": "Optional PixelKSample hook for customizing the sampling process."}),
+                        "tile_cnet_opt": ("CONTROL_NET", {"tooltip": "Optional ControlNet for tiled sampling."}),
+                        "tile_cnet_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Strength of the tile ControlNet if provided."}),
                     }
                 }
 
@@ -1090,24 +1088,24 @@ class PixelKSampleUpscalerProvider:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "scale_method": (s.upscale_methods,),
-                    "model": ("MODEL",),
-                    "vae": ("VAE",),
-                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS, ),
-                    "scheduler": (core.SCHEDULERS, ),
-                    "positive": ("CONDITIONING", ),
-                    "negative": ("CONDITIONING", ),
-                    "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-                    "use_tiled_vae": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                    "tile_size": ("INT", {"default": 512, "min": 320, "max": 4096, "step": 64}),
+                    "scale_method": (s.upscale_methods, {"tooltip": "Resampling method for scaling in pixel space."}),
+                    "model": ("MODEL", {"tooltip": "Main model for the KSampler."}),
+                    "vae": ("VAE", {"tooltip": "VAE for pixel space operations during upscaling."}),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Seed for the KSampler."}),
+                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000, "tooltip": "Number of sampling steps."}),
+                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "tooltip": "Classifier Free Guidance scale."}),
+                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Name of the KSampler."}),
+                    "scheduler": (core.SCHEDULERS, {"tooltip": "Scheduler for the KSampler."}),
+                    "positive": ("CONDITIONING", {"tooltip": "Positive conditioning."}),
+                    "negative": ("CONDITIONING", {"tooltip": "Negative conditioning."}),
+                    "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength."}),
+                    "use_tiled_vae": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Enable tiled VAE for decoding/encoding if upscaling in pixel space."}),
+                    "tile_size": ("INT", {"default": 512, "min": 320, "max": 4096, "step": 64, "tooltip": "Tile size for tiled VAE operations, if enabled."}),
                     },
                 "optional": {
-                        "upscale_model_opt": ("UPSCALE_MODEL", ),
-                        "pk_hook_opt": ("PK_HOOK", ),
-                        "scheduler_func_opt": ("SCHEDULER_FUNC",),
+                        "upscale_model_opt": ("UPSCALE_MODEL", {"tooltip": "Optional upscale model for pixel space upscaling."}),
+                        "pk_hook_opt": ("PK_HOOK", {"tooltip": "Optional PixelKSample hook."}),
+                        "scheduler_func_opt": ("SCHEDULER_FUNC", {"tooltip": "Optional custom scheduler function."}),
                     }
                 }
 
@@ -1130,23 +1128,23 @@ class PixelKSampleUpscalerProviderPipe(PixelKSampleUpscalerProvider):
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "scale_method": (s.upscale_methods,),
-                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS, ),
-                    "scheduler": (core.SCHEDULERS, ),
-                    "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-                    "use_tiled_vae": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                    "basic_pipe": ("BASIC_PIPE",),
-                    "tile_size": ("INT", {"default": 512, "min": 320, "max": 4096, "step": 64}),
+                    "scale_method": (s.upscale_methods, {"tooltip": "Resampling method for scaling in pixel space."}),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Seed for the KSampler."}),
+                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000, "tooltip": "Number of sampling steps."}),
+                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "tooltip": "Classifier Free Guidance scale."}),
+                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Name of the KSampler."}),
+                    "scheduler": (core.SCHEDULERS, {"tooltip": "Scheduler for the KSampler."}),
+                    "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength."}),
+                    "use_tiled_vae": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Enable tiled VAE for decoding/encoding if upscaling in pixel space."}),
+                    "basic_pipe": ("BASIC_PIPE", {"tooltip": "Basic pipe providing model, VAE, positive and negative conditioning."}),
+                    "tile_size": ("INT", {"default": 512, "min": 320, "max": 4096, "step": 64, "tooltip": "Tile size for tiled VAE operations, if enabled."}),
                     },
                 "optional": {
-                        "upscale_model_opt": ("UPSCALE_MODEL", ),
-                        "pk_hook_opt": ("PK_HOOK", ),
-                        "scheduler_func_opt": ("SCHEDULER_FUNC",),
-                        "tile_cnet_opt": ("CONTROL_NET", ),
-                        "tile_cnet_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                        "upscale_model_opt": ("UPSCALE_MODEL", {"tooltip": "Optional upscale model for pixel space upscaling."}),
+                        "pk_hook_opt": ("PK_HOOK", {"tooltip": "Optional PixelKSample hook."}),
+                        "scheduler_func_opt": ("SCHEDULER_FUNC", {"tooltip": "Optional custom scheduler function."}),
+                        "tile_cnet_opt": ("CONTROL_NET", {"tooltip": "Optional ControlNet for tiled sampling."}),
+                        "tile_cnet_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Strength of the tile ControlNet if provided."}),
                     }
                 }
 
@@ -1172,25 +1170,25 @@ class TwoSamplersForMaskUpscalerProvider:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "scale_method": (s.upscale_methods,),
+                     "scale_method": (s.upscale_methods, {"tooltip": "Resampling method for scaling in pixel space."}),
                      "full_sample_schedule": (
                          ["none", "interleave1", "interleave2", "interleave3",
                           "last1", "last2",
                           "interleave1+last1", "interleave2+last1", "interleave3+last1",
-                          ],),
-                     "use_tiled_vae": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                     "base_sampler": ("KSAMPLER", ),
-                     "mask_sampler": ("KSAMPLER", ),
-                     "mask": ("MASK", ),
-                     "vae": ("VAE",),
-                     "tile_size": ("INT", {"default": 512, "min": 320, "max": 4096, "step": 64}),
+                          ], {"tooltip": "Schedule for when to apply the full sampler versus base/mask samplers."}),
+                     "use_tiled_vae": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Enable tiled VAE for pixel space operations."}),
+                     "base_sampler": ("KSAMPLER", {"tooltip": "KSampler to use for the area outside the mask."}),
+                     "mask_sampler": ("KSAMPLER", {"tooltip": "KSampler to use for the masked area."}),
+                     "mask": ("MASK", {"tooltip": "Mask defining the region for the `mask_sampler`."}),
+                     "vae": ("VAE", {"tooltip": "VAE for pixel space operations."}),
+                     "tile_size": ("INT", {"default": 512, "min": 320, "max": 4096, "step": 64, "tooltip": "Tile size for tiled VAE operations, if enabled."}),
                      },
                 "optional": {
-                        "full_sampler_opt": ("KSAMPLER",),
-                        "upscale_model_opt": ("UPSCALE_MODEL", ),
-                        "pk_hook_base_opt": ("PK_HOOK", ),
-                        "pk_hook_mask_opt": ("PK_HOOK", ),
-                        "pk_hook_full_opt": ("PK_HOOK", ),
+                        "full_sampler_opt": ("KSAMPLER", {"tooltip": "Optional KSampler to use for full sampling steps."}),
+                        "upscale_model_opt": ("UPSCALE_MODEL", {"tooltip": "Optional upscale model for pixel space upscaling."}),
+                        "pk_hook_base_opt": ("PK_HOOK", {"tooltip": "Optional hook for the base sampler."}),
+                        "pk_hook_mask_opt": ("PK_HOOK", {"tooltip": "Optional hook for the mask sampler."}),
+                        "pk_hook_full_opt": ("PK_HOOK", {"tooltip": "Optional hook for the full sampler."}),
                     }
                 }
 
@@ -1214,25 +1212,25 @@ class TwoSamplersForMaskUpscalerProviderPipe:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "scale_method": (s.upscale_methods,),
+                     "scale_method": (s.upscale_methods, {"tooltip": "Resampling method for scaling in pixel space."}),
                      "full_sample_schedule": (
                          ["none", "interleave1", "interleave2", "interleave3",
                           "last1", "last2",
                           "interleave1+last1", "interleave2+last1", "interleave3+last1",
-                          ],),
-                     "use_tiled_vae": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                     "base_sampler": ("KSAMPLER", ),
-                     "mask_sampler": ("KSAMPLER", ),
-                     "mask": ("MASK", ),
-                     "basic_pipe": ("BASIC_PIPE",),
-                     "tile_size": ("INT", {"default": 512, "min": 320, "max": 4096, "step": 64}),
+                          ], {"tooltip": "Schedule for when to apply the full sampler versus base/mask samplers."}),
+                     "use_tiled_vae": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Enable tiled VAE for pixel space operations."}),
+                     "base_sampler": ("KSAMPLER", {"tooltip": "KSampler to use for the area outside the mask."}),
+                     "mask_sampler": ("KSAMPLER", {"tooltip": "KSampler to use for the masked area."}),
+                     "mask": ("MASK", {"tooltip": "Mask defining the region for the `mask_sampler`."}),
+                     "basic_pipe": ("BASIC_PIPE", {"tooltip": "Basic pipe providing the VAE."}),
+                     "tile_size": ("INT", {"default": 512, "min": 320, "max": 4096, "step": 64, "tooltip": "Tile size for tiled VAE operations, if enabled."}),
                      },
                 "optional": {
-                        "full_sampler_opt": ("KSAMPLER",),
-                        "upscale_model_opt": ("UPSCALE_MODEL", ),
-                        "pk_hook_base_opt": ("PK_HOOK", ),
-                        "pk_hook_mask_opt": ("PK_HOOK", ),
-                        "pk_hook_full_opt": ("PK_HOOK", ),
+                        "full_sampler_opt": ("KSAMPLER", {"tooltip": "Optional KSampler to use for full sampling steps."}),
+                        "upscale_model_opt": ("UPSCALE_MODEL", {"tooltip": "Optional upscale model for pixel space upscaling."}),
+                        "pk_hook_base_opt": ("PK_HOOK", {"tooltip": "Optional hook for the base sampler."}),
+                        "pk_hook_mask_opt": ("PK_HOOK", {"tooltip": "Optional hook for the mask sampler."}),
+                        "pk_hook_full_opt": ("PK_HOOK", {"tooltip": "Optional hook for the full sampler."}),
                     }
                 }
 
@@ -1258,12 +1256,12 @@ class IterativeLatentUpscale:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "samples": ("LATENT", ),
-                     "upscale_factor": ("FLOAT", {"default": 1.5, "min": 1, "max": 10000, "step": 0.1}),
-                     "steps": ("INT", {"default": 3, "min": 1, "max": 10000, "step": 1}),
-                     "temp_prefix": ("STRING", {"default": ""}),
-                     "upscaler": ("UPSCALER",),
-                     "step_mode": (["simple", "geometric"], {"default": "simple"})
+                     "samples": ("LATENT", {"tooltip": "Input latent samples to be iteratively upscaled."}),
+                     "upscale_factor": ("FLOAT", {"default": 1.5, "min": 1, "max": 10000, "step": 0.1, "tooltip": "Total factor by which to upscale the latent over the iterations."}),
+                     "steps": ("INT", {"default": 3, "min": 1, "max": 10000, "step": 1, "tooltip": "Number of iterative upscaling steps."}),
+                     "temp_prefix": ("STRING", {"default": "", "tooltip": "Prefix for temporary files saved during upscaling steps (if any)."}),
+                     "upscaler": ("UPSCALER", {"tooltip": "Upscaler object to use for each iteration."}),
+                     "step_mode": (["simple", "geometric"], {"default": "simple", "tooltip": "Mode for calculating upscale factor per step: 'simple' divides linearly, 'geometric' uses power."})
                     },
                 "hidden": {"unique_id": "UNIQUE_ID"},
                 }
@@ -1322,13 +1320,13 @@ class IterativeImageUpscale:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "pixels": ("IMAGE", ),
-                     "upscale_factor": ("FLOAT", {"default": 1.5, "min": 1, "max": 10000, "step": 0.1}),
-                     "steps": ("INT", {"default": 3, "min": 1, "max": 10000, "step": 1}),
-                     "temp_prefix": ("STRING", {"default": ""}),
-                     "upscaler": ("UPSCALER",),
-                     "vae": ("VAE",),
-                     "step_mode": (["simple", "geometric"], {"default": "simple"})
+                     "pixels": ("IMAGE", {"tooltip": "Input image to be iteratively upscaled."}),
+                     "upscale_factor": ("FLOAT", {"default": 1.5, "min": 1, "max": 10000, "step": 0.1, "tooltip": "Total factor by which to upscale the image over the iterations."}),
+                     "steps": ("INT", {"default": 3, "min": 1, "max": 10000, "step": 1, "tooltip": "Number of iterative upscaling steps."}),
+                     "temp_prefix": ("STRING", {"default": "", "tooltip": "Prefix for temporary files saved during upscaling steps (if any)."}),
+                     "upscaler": ("UPSCALER", {"tooltip": "Upscaler object to use for each iteration."}),
+                     "vae": ("VAE", {"tooltip": "VAE for converting image to latent and back."}),
+                     "step_mode": (["simple", "geometric"], {"default": "simple", "tooltip": "Mode for calculating upscale factor per step."})
                     },
                 "hidden": {"unique_id": "UNIQUE_ID"}
                 }
@@ -1370,43 +1368,43 @@ class FaceDetailerPipe:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "image": ("IMAGE", ),
+                    "image": ("IMAGE", {"tooltip": "The input image to be detailed."}),
                     "detailer_pipe": ("DETAILER_PIPE", {"tooltip": "If the `ImpactDummyInput` is connected to the model in the detailer_pipe, the inference stage is skipped."}),
-                    "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8}),
-                    "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region"}),
-                    "max_size": ("FLOAT", {"default": 1024, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8}),
-                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                    "scheduler": (core.SCHEDULERS,),
-                    "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01}),
-                    "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1}),
-                    "noise_mask": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled"}),
-                    "force_inpaint": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled"}),
+                    "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8, "tooltip": "Target size for guiding the detail enhancement process."}),
+                    "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region", "tooltip": "Determines if 'guide_size' refers to bounding box or crop region."}),
+                    "max_size": ("FLOAT", {"default": 1024, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8, "tooltip": "Maximum size for a segment after scaling."}),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Seed for the sampler."}),
+                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000, "tooltip": "Number of sampling steps."}),
+                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "tooltip": "Classifier Free Guidance scale."}),
+                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Name of the KSampler to use."}),
+                    "scheduler": (core.SCHEDULERS, {"tooltip": "Scheduler for the KSampler."}),
+                    "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength."}),
+                    "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering for mask blending."}),
+                    "noise_mask": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled", "tooltip": "Use segment's mask as noise mask."}),
+                    "force_inpaint": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled", "tooltip": "Force inpainting even if segment is large."}),
 
-                    "bbox_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                    "bbox_dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1}),
-                    "bbox_crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 10, "step": 0.1}),
+                    "bbox_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for the bounding box detector."}),
+                    "bbox_dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for bounding box masks."}),
+                    "bbox_crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 10, "step": 0.1, "tooltip": "Factor to expand bounding box for cropping."}),
 
-                    "sam_detection_hint": (["center-1", "horizontal-2", "vertical-2", "rect-4", "diamond-4", "mask-area", "mask-points", "mask-point-bbox", "none"],),
-                    "sam_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1}),
-                    "sam_threshold": ("FLOAT", {"default": 0.93, "min": 0.0, "max": 1.0, "step": 0.01}),
-                    "sam_bbox_expansion": ("INT", {"default": 0, "min": 0, "max": 1000, "step": 1}),
-                    "sam_mask_hint_threshold": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01}),
-                    "sam_mask_hint_use_negative": (["False", "Small", "Outter"],),
+                    "sam_detection_hint": (["center-1", "horizontal-2", "vertical-2", "rect-4", "diamond-4", "mask-area", "mask-points", "mask-point-bbox", "none"], {"tooltip": "Hint type for SAM (Segment Anything Model) if used."}),
+                    "sam_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1, "tooltip": "Dilation factor for SAM-generated masks."}),
+                    "sam_threshold": ("FLOAT", {"default": 0.93, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for SAM mask generation."}),
+                    "sam_bbox_expansion": ("INT", {"default": 0, "min": 0, "max": 1000, "step": 1, "tooltip": "Expansion factor for bounding box hints passed to SAM."}),
+                    "sam_mask_hint_threshold": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Threshold for using parts of a mask as hints for SAM."}),
+                    "sam_mask_hint_use_negative": (["False", "Small", "Outter"], {"tooltip": "Strategy for using negative points as hints for SAM."}),
 
-                    "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10}),
-                    "refiner_ratio": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0}),
+                    "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10, "tooltip": "Minimum size for detected bounding boxes to be processed."}),
+                    "refiner_ratio": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0, "tooltip": "Ratio of steps to switch to refiner."}),
 
-                    "cycle": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1}),
+                    "cycle": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1, "tooltip": "Number of detailing cycles."}),
                    },
                 "optional": {
-                    "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                    "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1}),
-                    "scheduler_func_opt": ("SCHEDULER_FUNC",),
-                    "tiled_encode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                    "tiled_decode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
+                    "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Use inpaint model conditioning for VAE."}),
+                    "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering for noise mask if used."}),
+                    "scheduler_func_opt": ("SCHEDULER_FUNC", {"tooltip": "Optional custom scheduler function."}),
+                    "tiled_encode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Enable tiled VAE encoding."}),
+                    "tiled_decode": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Enable tiled VAE decoding."}),
                    }
                 }
 
@@ -1472,38 +1470,38 @@ class MaskDetailerPipe:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "image": ("IMAGE", ),
-                    "mask": ("MASK", ),
-                    "basic_pipe": ("BASIC_PIPE",),
+                    "image": ("IMAGE", {"tooltip": "The input image to be detailed using the provided mask."}),
+                    "mask": ("MASK", {"tooltip": "Mask defining the area to be detailed."}),
+                    "basic_pipe": ("BASIC_PIPE", {"tooltip": "Basic pipe providing model, VAE, positive and negative conditioning."}),
 
-                    "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8}),
-                    "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "mask bbox", "label_off": "crop region"}),
-                    "max_size": ("FLOAT", {"default": 1024, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8}),
-                    "mask_mode": ("BOOLEAN", {"default": True, "label_on": "masked only", "label_off": "whole"}),
+                    "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8, "tooltip": "Target size for guiding the detail enhancement process."}),
+                    "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "mask bbox", "label_off": "crop region", "tooltip": "Determines if 'guide_size' refers to the mask's bounding box or its crop region for scaling."}),
+                    "max_size": ("FLOAT", {"default": 1024, "min": 64, "max": nodes.MAX_RESOLUTION, "step": 8, "tooltip": "Maximum size for a segment after scaling for detail enhancement."}),
+                    "mask_mode": ("BOOLEAN", {"default": True, "label_on": "masked only", "label_off": "whole", "tooltip": "If true, details only the masked region; if false, details the whole cropped region derived from the mask."}),
 
-                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                    "scheduler": (core.SCHEDULERS,),
-                    "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01}),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Seed for the sampler."}),
+                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000, "tooltip": "Number of sampling steps."}),
+                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "tooltip": "Classifier Free Guidance scale."}),
+                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Name of the KSampler to use."}),
+                    "scheduler": (core.SCHEDULERS, {"tooltip": "Scheduler for the KSampler."}),
+                    "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength."}),
 
-                    "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1}),
-                    "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 10, "step": 0.1}),
-                    "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10}),
-                    "refiner_ratio": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0}),
-                    "batch_size": ("INT", {"default": 1, "min": 1, "max": 100}),
+                    "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering amount for blending the detailed segment."}),
+                    "crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 10, "step": 0.1, "tooltip": "Factor to expand the mask's bounding box to define the cropping region."}),
+                    "drop_size": ("INT", {"min": 1, "max": MAX_RESOLUTION, "step": 1, "default": 10, "tooltip": "Minimum size for a segment derived from the mask to be processed."}),
+                    "refiner_ratio": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0, "tooltip": "Ratio of steps to switch to refiner, if used."}),
+                    "batch_size": ("INT", {"default": 1, "min": 1, "max": 100, "tooltip": "Number of times to run the detailing process with incrementing seeds."}),
 
-                    "cycle": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1}),
+                    "cycle": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1, "tooltip": "Number of detailing cycles per batch item."}),
                    },
                 "optional": {
-                    "refiner_basic_pipe_opt": ("BASIC_PIPE", ),
-                    "detailer_hook": ("DETAILER_HOOK",),
-                    "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                    "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1}),
-                    "bbox_fill": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
-                    "contour_fill": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled"}),
-                    "scheduler_func_opt": ("SCHEDULER_FUNC",),
+                    "refiner_basic_pipe_opt": ("BASIC_PIPE", {"tooltip": "Optional basic pipe for a refiner stage."}),
+                    "detailer_hook": ("DETAILER_HOOK", {"tooltip": "Optional hook for customizing the detailing process."}),
+                    "inpaint_model": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Use inpaint model conditioning for VAE."}),
+                    "noise_mask_feather": ("INT", {"default": 20, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering for noise mask if `mask_mode` is 'masked only'."}),
+                    "bbox_fill": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled", "tooltip": "Fill the bounding box of the segment in the mask."}),
+                    "contour_fill": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled", "tooltip": "Fill contours when converting mask to SEGS. If false, original mask values within contours are used."}),
+                    "scheduler_func_opt": ("SCHEDULER_FUNC", {"tooltip": "Optional custom scheduler function."}),
                    }
                 }
 
@@ -1668,8 +1666,8 @@ class SegsBitwiseAndMask:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "segs": ("SEGS",),
-                        "mask": ("MASK",),
+                        "segs": ("SEGS", {"tooltip": "Input segments (SEGS)."}),
+                        "mask": ("MASK", {"tooltip": "Mask to perform bitwise AND operation with each segment's mask."}),
                     }
                 }
 
@@ -1686,8 +1684,8 @@ class SegsBitwiseAndMaskForEach:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "segs": ("SEGS",),
-                        "masks": ("MASK",),
+                        "segs": ("SEGS", {"tooltip": "Input segments (SEGS)."}),
+                        "masks": ("MASK", {"tooltip": "Batch of masks. Each mask in the batch is applied with a bitwise AND to the corresponding segment's mask."}),
                     }
                 }
 
@@ -1705,8 +1703,8 @@ class BitwiseAndMaskForEach:
     def INPUT_TYPES(s):
         return {"required":
             {
-                "base_segs": ("SEGS",),
-                "mask_segs": ("SEGS",),
+                "base_segs": ("SEGS", {"tooltip": "Base segments whose masks will be intersected."}),
+                "mask_segs": ("SEGS", {"tooltip": "Segments whose combined mask will be used for intersection."}),
             }
         }
 
@@ -1728,8 +1726,8 @@ class SubtractMaskForEach:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "base_segs": ("SEGS",),
-                        "mask_segs": ("SEGS",),
+                        "base_segs": ("SEGS", {"tooltip": "Base segments from which mask areas will be subtracted."}),
+                        "mask_segs": ("SEGS", {"tooltip": "Segments whose combined mask defines the areas to subtract."}),
                     }
                 }
 
@@ -1750,8 +1748,8 @@ class ToBinaryMask:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                      "mask": ("MASK",),
-                      "threshold": ("INT", {"default": 20, "min": 1, "max": 255}),
+                      "mask": ("MASK", {"tooltip": "Input mask to convert to binary."}),
+                      "threshold": ("INT", {"default": 20, "min": 1, "max": 255, "tooltip": "Threshold value (0-255). Pixels above this become 1, others 0."}),
                     }
                 }
 
@@ -1769,7 +1767,7 @@ class FlattenMask:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "masks": ("MASK",),
+                        "masks": ("MASK", {"tooltip": "Batch of masks to flatten into a single mask by taking the union (bitwise OR)."}),
                     }
                 }
 
@@ -1788,8 +1786,8 @@ class BitwiseAndMask:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "mask1": ("MASK",),
-                        "mask2": ("MASK",),
+                        "mask1": ("MASK", {"tooltip": "First mask for the bitwise AND operation."}),
+                        "mask2": ("MASK", {"tooltip": "Second mask for the bitwise AND operation."}),
                     }
                 }
 
@@ -1807,8 +1805,8 @@ class SubtractMask:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "mask1": ("MASK", ),
-                        "mask2": ("MASK", ),
+                        "mask1": ("MASK", {"tooltip": "Mask from which mask2 will be subtracted."}),
+                        "mask2": ("MASK", {"tooltip": "Mask to subtract from mask1."}),
                       }
                 }
 
@@ -1826,8 +1824,8 @@ class AddMask:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-            "mask1": ("MASK",),
-            "mask2": ("MASK",),
+            "mask1": ("MASK", {"tooltip": "First mask for the addition (union) operation."}),
+            "mask2": ("MASK", {"tooltip": "Second mask for the addition (union) operation."}),
         }
         }
 
@@ -2019,11 +2017,11 @@ class ImageReceiver:
         input_dir = folder_paths.get_input_directory()
         files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
         return {"required": {
-                    "image": (sorted(files), ),
-                    "link_id": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1}),
-                    "save_to_workflow": ("BOOLEAN", {"default": False}),
-                    "image_data": ("STRING", {"multiline": False}),
-                    "trigger_always": ("BOOLEAN", {"default": False, "label_on": "enable", "label_off": "disable"}),
+                    "image": (sorted(files), {"tooltip": "Select an image file from the input directory."}),
+                    "link_id": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1, "tooltip": "ID to link with an ImageSender node for remote image transfer."}),
+                    "save_to_workflow": ("BOOLEAN", {"default": False, "tooltip": "If true, the image data is saved within the workflow JSON instead of referencing an external file."}),
+                    "image_data": ("STRING", {"multiline": False, "tooltip": "Base64 encoded image data, used when 'save_to_workflow' is true."}),
+                    "trigger_always": ("BOOLEAN", {"default": False, "label_on": "enable", "label_off": "disable", "tooltip": "If true, always treat this node as changed, forcing re-execution downstream."}),
                     },
                 }
 
@@ -2079,9 +2077,9 @@ class ImageSender(nodes.PreviewImage):
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "images": ("IMAGE", ),
-                    "filename_prefix": ("STRING", {"default": "ImgSender"}),
-                    "link_id": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1}), },
+                    "images": ("IMAGE", {"tooltip": "Images to be saved and potentially sent to an ImageReceiver."}),
+                    "filename_prefix": ("STRING", {"default": "ImgSender", "tooltip": "Prefix for the filenames of saved images."}),
+                    "link_id": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1, "tooltip": "ID to link with an ImageReceiver node for remote image transfer."}), },
                 "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
                 }
 
@@ -2110,9 +2108,9 @@ class LatentReceiver:
         input_dir = folder_paths.get_input_directory()
         files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f)) and check_file_extension(f)]
         return {"required": {
-                    "latent": (sorted(files), ),
-                    "link_id": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1}),
-                    "trigger_always": ("BOOLEAN", {"default": False, "label_on": "enable", "label_off": "disable"}),
+                    "latent": (sorted(files), {"tooltip": "Select a latent file (.latent or .latent.png) from the input directory."}),
+                    "link_id": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1, "tooltip": "ID to link with a LatentSender node."}),
+                    "trigger_always": ("BOOLEAN", {"default": False, "label_on": "enable", "label_off": "disable", "tooltip": "If true, always treat this node as changed."}),
                     },
                 }
 
@@ -2207,15 +2205,15 @@ class LatentSender(nodes.SaveLatent):
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                             "samples": ("LATENT", ),
-                             "filename_prefix": ("STRING", {"default": "latents/LatentSender"}),
-                             "link_id": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1}),
+                             "samples": ("LATENT", {"tooltip": "Latent samples to be saved and potentially sent."}),
+                             "filename_prefix": ("STRING", {"default": "latents/LatentSender", "tooltip": "Prefix for the filenames of saved latent files."}),
+                             "link_id": ("INT", {"default": 0, "min": 0, "max": sys.maxsize, "step": 1, "tooltip": "ID to link with a LatentReceiver node."}),
                              "preview_method": (["Latent2RGB-FLUX.1",
                                                  "Latent2RGB-SDXL", "Latent2RGB-SD15", "Latent2RGB-SD3",
                                                  "Latent2RGB-SD-X4", "Latent2RGB-Playground-2.5",
                                                  "Latent2RGB-SC-Prior", "Latent2RGB-SC-B",
                                                  "Latent2RGB-LTXV",
-                                                 "TAEF1", "TAESDXL", "TAESD15", "TAESD3"],)
+                                                 "TAEF1", "TAESDXL", "TAESD15", "TAESD3"], {"tooltip": "Method for generating the preview image embedded in the .latent.png file."})
                              },
                 "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
                 }
@@ -2434,8 +2432,8 @@ class ImpactSchedulerAdapter:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-            "scheduler": (comfy.samplers.KSampler.SCHEDULERS, {"defaultInput": True, }),
-            "extra_scheduler": (['None', 'AYS SDXL', 'AYS SD1', 'AYS SVD', 'GITS[coeff=1.2]', 'LTXV[default]', 'OSS FLUX', 'OSS Wan'],),
+            "scheduler": (comfy.samplers.KSampler.SCHEDULERS, {"defaultInput": True, "tooltip": "Standard ComfyUI scheduler."}),
+            "extra_scheduler": (['None', 'AYS SDXL', 'AYS SD1', 'AYS SVD', 'GITS[coeff=1.2]', 'LTXV[default]', 'OSS FLUX', 'OSS Wan'], {"tooltip": "Additional or alternative schedulers provided by Impact Pack. Overrides standard scheduler if not 'None'."}),
         }}
 
     CATEGORY = "ImpactPack/Util"
