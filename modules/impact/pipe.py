@@ -7,11 +7,11 @@ class ToDetailerPipe:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "model": ("MODEL", {"tooltip": "The main model (e.g., SD1.5, SDXL base) for the detailer pipeline."}),
-                     "clip": ("CLIP", {"tooltip": "The CLIP model associated with the main model."}),
+                     "model": ("MODEL",),
+                     "clip": ("CLIP",),
                      "vae": ("VAE",),
-                     "positive": ("CONDITIONING", {"tooltip": "Positive conditioning for the main model."}),
-                     "negative": ("CONDITIONING", {"tooltip": "Negative conditioning for the main model."}),
+                     "positive": ("CONDITIONING",),
+                     "negative": ("CONDITIONING",),
                      "bbox_detector": ("BBOX_DETECTOR", {"tooltip": "Bounding box detector to be included in the pipe."}),
                      "wildcard": ("STRING", {"multiline": True, "dynamicPrompts": False, "tooltip": "Wildcard string/prompt to be associated with this detailer pipe."}),
                      "Select to add LoRA": (["Select the LoRA to add to the text"] + folder_paths.get_filename_list("loras"),),
@@ -41,15 +41,15 @@ class ToDetailerPipeSDXL(ToDetailerPipe):
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "model": ("MODEL", {"tooltip": "The SDXL base model."}),
-                     "clip": ("CLIP", {"tooltip": "The CLIP model associated with the base model."}),
+                     "model": ("MODEL",),
+                     "clip": ("CLIP",),
                      "vae": ("VAE",),
-                     "positive": ("CONDITIONING", {"tooltip": "Positive conditioning for the base model."}),
-                     "negative": ("CONDITIONING", {"tooltip": "Negative conditioning for the base model."}),
-                     "refiner_model": ("MODEL", {"tooltip": "The SDXL refiner model."}),
-                     "refiner_clip": ("CLIP", {"tooltip": "The CLIP model associated with the refiner model."}),
-                     "refiner_positive": ("CONDITIONING", {"tooltip": "Positive conditioning for the refiner model."}),
-                     "refiner_negative": ("CONDITIONING", {"tooltip": "Negative conditioning for the refiner model."}),
+                     "positive": ("CONDITIONING",),
+                     "negative": ("CONDITIONING",),
+                     "refiner_model": ("MODEL",),
+                     "refiner_clip": ("CLIP",),
+                     "refiner_positive": ("CONDITIONING",),
+                     "refiner_negative": ("CONDITIONING",),
                      "bbox_detector": ("BBOX_DETECTOR", {"tooltip": "Bounding box detector to be included in the SDXL pipe."}),
                      "wildcard": ("STRING", {"multiline": True, "dynamicPrompts": False, "tooltip": "Wildcard string/prompt for the SDXL pipe."}),
                      "Select to add LoRA": (["Select the LoRA to add to the text"] + folder_paths.get_filename_list("loras"),),
@@ -133,11 +133,11 @@ class ToBasicPipe:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                     "model": ("MODEL", {"tooltip": "The model component."}),
-                     "clip": ("CLIP", {"tooltip": "The CLIP model component."}),
+                     "model": ("MODEL",),
+                     "clip": ("CLIP",),
                      "vae": ("VAE",),
-                     "positive": ("CONDITIONING", {"tooltip": "The positive conditioning component."}),
-                     "negative": ("CONDITIONING", {"tooltip": "The negative conditioning component."}),
+                     "positive": ("CONDITIONING",),
+                     "negative": ("CONDITIONING",),
                      },
                 }
 
