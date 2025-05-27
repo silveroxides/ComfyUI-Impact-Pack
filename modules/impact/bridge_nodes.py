@@ -16,8 +16,8 @@ class PreviewBridge:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "images": ("IMAGE", {"tooltip": "Tooltip for images"}),
-                    "image": ("STRING", {"default": "", "tooltip": "Tooltip for image"}),
+                    "images": ("IMAGE",),
+                    "image": ("STRING", {"default": ""}),
                     },
                 "optional": {
                     "block": ("BOOLEAN", {"default": False, "label_on": "if_empty_mask", "label_off": "never", "tooltip": "is_empty_mask: If the mask is empty, the execution is stopped.\nnever: The execution is never stopped."}),
@@ -208,17 +208,17 @@ class PreviewBridgeLatent:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "latent": ("LATENT", {"tooltip": "Tooltip for latent"}),
-                    "image": ("STRING", {"default": "", "tooltip": "Tooltip for image"}),
+                    "latent": ("LATENT",),
+                    "image": ("STRING", {"default": ""}),
                     "preview_method": (["Latent2RGB-FLUX.1",
                                         "Latent2RGB-SDXL", "Latent2RGB-SD15", "Latent2RGB-SD3",
                                         "Latent2RGB-SD-X4", "Latent2RGB-Playground-2.5",
                                         "Latent2RGB-SC-Prior", "Latent2RGB-SC-B",
                                         "Latent2RGB-LTXV",
-                                        "TAEF1", "TAESDXL", "TAESD15", "TAESD3"], {"tooltip": "Tooltip for preview_method"}),
+                                        "TAEF1", "TAESDXL", "TAESD15", "TAESD3"],),
                     },
                 "optional": {
-                    "vae_opt": ("VAE", {"tooltip": "Tooltip for vae_opt"}),
+                    "vae_opt": ("VAE", ),
                     "block": ("BOOLEAN", {"default": False, "label_on": "if_empty_mask", "label_off": "never", "tooltip": "is_empty_mask: If the mask is empty, the execution is stopped.\nnever: The execution is never stopped. Instead, it returns a white mask."}),
                     "restore_mask": (["never", "always", "if_same_size"], {"tooltip": "if_same_size: If the changed input latent is the same size as the previous latent, restore using the last saved mask\nalways: Whenever the input latent changes, always restore using the last saved mask\nnever: Do not restore the mask.\n`restore_mask` has higher priority than `block`\nIf the input latent already has a mask, do not restore mask."}),
                 },
