@@ -9,7 +9,7 @@ class ToDetailerPipe:
         return {"required": {
                      "model": ("MODEL", {"tooltip": "The main model (e.g., SD1.5, SDXL base) for the detailer pipeline."}),
                      "clip": ("CLIP", {"tooltip": "The CLIP model associated with the main model."}),
-                     "vae": ("VAE", {"tooltip": "The VAE associated with the main model."}),
+                     "vae": ("VAE",),
                      "positive": ("CONDITIONING", {"tooltip": "Positive conditioning for the main model."}),
                      "negative": ("CONDITIONING", {"tooltip": "Negative conditioning for the main model."}),
                      "bbox_detector": ("BBOX_DETECTOR", {"tooltip": "Bounding box detector to be included in the pipe."}),
@@ -43,7 +43,7 @@ class ToDetailerPipeSDXL(ToDetailerPipe):
         return {"required": {
                      "model": ("MODEL", {"tooltip": "The SDXL base model."}),
                      "clip": ("CLIP", {"tooltip": "The CLIP model associated with the base model."}),
-                     "vae": ("VAE", {"tooltip": "The VAE (typically associated with the base model)."}),
+                     "vae": ("VAE",),
                      "positive": ("CONDITIONING", {"tooltip": "Positive conditioning for the base model."}),
                      "negative": ("CONDITIONING", {"tooltip": "Negative conditioning for the base model."}),
                      "refiner_model": ("MODEL", {"tooltip": "The SDXL refiner model."}),
@@ -135,7 +135,7 @@ class ToBasicPipe:
         return {"required": {
                      "model": ("MODEL", {"tooltip": "The model component."}),
                      "clip": ("CLIP", {"tooltip": "The CLIP model component."}),
-                     "vae": ("VAE", {"tooltip": "The VAE component."}),
+                     "vae": ("VAE",),
                      "positive": ("CONDITIONING", {"tooltip": "The positive conditioning component."}),
                      "negative": ("CONDITIONING", {"tooltip": "The negative conditioning component."}),
                      },

@@ -147,7 +147,7 @@ class DetailerForEachPipeForAnimateDiff:
                       "steps": ("INT", {"default": 20, "min": 1, "max": 10000, "tooltip": "Number of sampling steps for the detail enhancement process."}),
                       "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "tooltip": "Classifier Free Guidance scale: higher values enforce prompt stronger."}),
                       "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                      "scheduler": (core.SCHEDULERS, {"tooltip": "Scheduler used for the diffusion sampling process."}),
+                      "scheduler": (core.SCHEDULERS,),
                       "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength for the detail enhancement. 1.0 means full denoise from noise."}),
                       "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1, "tooltip": "Feathering amount (in pixels) for pasting the enhanced segment back onto the main image."}),
                       "basic_pipe": ("BASIC_PIPE", {"tooltip": "If the `ImpactDummyInput` is connected to the model in the basic_pipe, the inference stage is skipped."}),
